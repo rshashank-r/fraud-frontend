@@ -1,0 +1,7 @@
+{
+  "name": "FraudGuard AI",
+  "description": "Secure banking dashboard with real-time AI fraud detection.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
