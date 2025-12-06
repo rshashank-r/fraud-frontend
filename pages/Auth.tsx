@@ -423,6 +423,7 @@ const Auth: React.FC = () => {
                   className="w-full pl-12 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
                   placeholder="your.email@example.com"
                   required
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -440,6 +441,7 @@ const Auth: React.FC = () => {
                   placeholder="••••••••"
                   required
                   minLength={8}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
                 <button
                   type="button"
@@ -485,6 +487,7 @@ const Auth: React.FC = () => {
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full pl-12 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
                     placeholder="+1 (555) 123-4567"
+                    autoComplete="tel"
                   />
                 </div>
               </div>
