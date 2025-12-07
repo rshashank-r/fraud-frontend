@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import api, { setAuthToken } from '../services/api';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -24,19 +25,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (storedToken && storedRole) {
             setToken(storedToken);
             setRole(storedRole);
+            setAuthToken(storedToken); // Sync API memory
         }
         setIsLoading(false);
     }, []);
 
     const login = (newToken: string, newRole: string) => {
-        localStorage.setItem('token', newToken);
+        setAuthToken(newToken); // Handle token (memory + localStorage + types)
         localStorage.setItem('role', newRole);
         setToken(newToken);
         setRole(newRole);
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
+        setAuthToken(null); // Clear token
         localStorage.removeItem('role');
         setToken(null);
         setRole(null);

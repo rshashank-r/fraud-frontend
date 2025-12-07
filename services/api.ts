@@ -9,6 +9,20 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// --- AUTH TOKEN MANAGEMENT ---
+let memoryToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  memoryToken = token;
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    localStorage.setItem('token', token);
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+    localStorage.removeItem('token');
+  }
+};
+
 // --- HELPER: CLIENT FINGERPRINTING ---
 const getSecurityContext = () => {
   return {
@@ -24,7 +38,14 @@ const getSecurityContext = () => {
 // Request Interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Prioritize memory token, then localStorage
+    const token = memoryToken || localStorage.getItem('token');
+
+    // Ensure memory token is synced if found in storage but not memory (e.g. on refresh)
+    if (!memoryToken && token) {
+      memoryToken = token;
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -47,7 +68,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       const currentPath = window.location.pathname;
       if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-        localStorage.removeItem('token');
+        setAuthToken(null); // Clear everything using our helper
         localStorage.removeItem('role');
 
         // Immediate Redirect to Login

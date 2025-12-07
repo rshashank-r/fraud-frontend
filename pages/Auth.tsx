@@ -102,12 +102,6 @@ const Auth: React.FC = () => {
             const token = response.access_token || response.token;
             login(token, response.role);
 
-            // 🚀 FORCE AXIOS HEADER: Ensure token is ready immediately, bypassing localStorage latency
-            // This fixes the mobile redirect loop where localStorage might be slow to persist
-            import('../services/api').then(({ default: api }) => {
-              api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            });
-
             setSuccess('Login successful!');
             setTimeout(() => {
               navigate(response.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
@@ -161,12 +155,13 @@ const Auth: React.FC = () => {
       // ✅ Success - Token saved in authAPI methods
       setSuccess('Verification successful! Redirecting...');
 
-      // 🚀 FORCE AXIOS HEADER
       if (response && (response.access_token || response.token)) {
         const token = response.access_token || response.token;
-        import('../services/api').then(({ default: api }) => {
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        });
+        // The token is already saved in authAPI methods (localStorage), 
+        // but we need to ensure AuthContext state is updated if we used useAuth().login() there?
+        // Wait, authAPI.verify2FA saves to localStorage directly in api.ts helper.
+        // We should instead call login() here to sync everything.
+        login(token, response.role);
       }
 
       setTimeout(() => {
