@@ -21,7 +21,7 @@ interface UserProfile {
   twofa_enabled?: boolean;
 }
 
-export const UserDashboard: React.FC = () => {
+const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Core States
@@ -182,3 +182,4 @@ export const UserDashboard: React.FC = () => {
     </div>
   );
 };
+export default UserDashboard; 
