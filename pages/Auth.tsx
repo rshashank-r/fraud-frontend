@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   Shield, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle,
   Smartphone, Loader2, ArrowLeft, RefreshCw, KeyRound
@@ -10,6 +11,7 @@ import { authAPI } from '../services/api';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Tab State
   const [isLogin, setIsLogin] = useState(true);
@@ -98,8 +100,7 @@ const Auth: React.FC = () => {
           // Direct login without 2FA (shouldn't happen with your backend)
           if (response.access_token || response.token) {
             const token = response.access_token || response.token;
-            localStorage.setItem('token', token);
-            localStorage.setItem('role', response.role);
+            login(token, response.role);
 
             setSuccess('Login successful!');
             setTimeout(() => {

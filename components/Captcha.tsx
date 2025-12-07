@@ -27,7 +27,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
     <div className="flex justify-center my-4">
       <ReCAPTCHA
         ref={recaptchaRef}
-        sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Google's test key - replace with your own
+        sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
         onChange={handleChange}
         onExpired={handleExpired}
         onErrored={handleError}
