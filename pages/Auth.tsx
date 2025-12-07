@@ -97,14 +97,20 @@ const Auth: React.FC = () => {
             setSuccess('OTP sent to your email. Check your inbox.');
           }
         } else {
-          // Direct login without 2FA (shouldn't happen with your backend)
+          // Direct login without 2FA
           if (response.access_token || response.token) {
             const token = response.access_token || response.token;
             login(token, response.role);
 
+            // 🚀 FORCE AXIOS HEADER: Ensure token is ready immediately, bypassing localStorage latency
+            // This fixes the mobile redirect loop where localStorage might be slow to persist
+            import('../services/api').then(({ default: api }) => {
+              api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            });
+
             setSuccess('Login successful!');
             setTimeout(() => {
-              navigate(response.role === 'ADMIN' ? '/admin' : '/dashboard');
+              navigate(response.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
             }, 1000);
           }
         }
@@ -155,9 +161,17 @@ const Auth: React.FC = () => {
       // ✅ Success - Token saved in authAPI methods
       setSuccess('Verification successful! Redirecting...');
 
+      // 🚀 FORCE AXIOS HEADER
+      if (response && (response.access_token || response.token)) {
+        const token = response.access_token || response.token;
+        import('../services/api').then(({ default: api }) => {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        });
+      }
+
       setTimeout(() => {
         const role = localStorage.getItem('role');
-        navigate(role === 'ADMIN' ? '/admin' : '/dashboard');
+        navigate(role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
       }, 1000);
 
     } catch (err: any) {
