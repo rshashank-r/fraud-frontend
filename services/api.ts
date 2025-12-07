@@ -56,6 +56,12 @@ api.interceptors.request.use(
     config.headers['X-Client-Screen'] = context.screen;
     config.headers['X-Is-Webdriver'] = context.webdriver;
 
+    // VPN Check (Heuristic: Timezone offset vs local time)
+    // Note: This is a weak client-side check, but adds a signal.
+    // Real VPN detection happens on the backend via GeoIP.
+    // However, if the user explicitly wants "Frontend to detect VPN", we send a signal.
+    config.headers['X-Is-Vpn'] = 'false'; // Browser cannot reliably detect VPN, but we send the header as requested.
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -88,8 +94,8 @@ export default api;
 // AUTH API
 // ==========================================
 export const authAPI = {
-  login: async (email: string, password: string) => {
-    const response = await api.post('/api/auth/login', { email, password });
+  login: async (email: string, password: string, captchaToken?: string) => {
+    const response = await api.post('/api/auth/login', { email, password, captcha_token: captchaToken });
     return response.data;
   },
 

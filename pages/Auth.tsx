@@ -84,7 +84,12 @@ const Auth: React.FC = () => {
     try {
       if (isLogin) {
         // ✅ LOGIN - Step 1
-        const response = await authAPI.login(email, password);
+        if (!captchaToken) {
+          setError('Please complete the CAPTCHA');
+          setLoading(false);
+          return;
+        }
+        const response = await authAPI.login(email, password, captchaToken);
 
         // Check if verification is required (202 status)
         if (response.verification_required) {
@@ -381,6 +386,7 @@ const Auth: React.FC = () => {
                 setIsLogin(true);
                 setError('');
                 setSuccess('');
+                setCaptchaToken(null);
               }}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${isLogin
                 ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
@@ -394,6 +400,7 @@ const Auth: React.FC = () => {
                 setIsLogin(false);
                 setError('');
                 setSuccess('');
+                setCaptchaToken(null);
               }}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${!isLogin
                 ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
@@ -541,13 +548,11 @@ const Auth: React.FC = () => {
               </div>
             )}
 
-            {/* CAPTCHA (Register Only) */}
-            {!isLogin && (
-              <Captcha
-                onVerify={(token) => setCaptchaToken(token)}
-                onError={() => setCaptchaToken(null)}
-              />
-            )}
+            {/* CAPTCHA (Login & Register) */}
+            <Captcha
+              onVerify={(token) => setCaptchaToken(token)}
+              onError={() => setCaptchaToken(null)}
+            />
 
             {/* Submit Button */}
             <Button
