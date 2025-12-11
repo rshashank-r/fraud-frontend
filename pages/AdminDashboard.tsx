@@ -6,7 +6,8 @@ import { formatIndianCurrency } from '../src/utils/formatters';
 import {
   Shield, Users, Activity, LogOut, CheckCircle,
   XCircle, Lock, Mail, RefreshCw,
-  Eye, Search, ChevronLeft, ChevronRight, Network, ArrowUpRight
+  Eye, Search, ChevronLeft, ChevronRight, Network, ArrowUpRight,
+  AlertTriangle, BarChart3, PieChart, TrendingUp, MapPin, Smartphone, Wifi, FileText
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -20,6 +21,35 @@ export const AdminDashboard: React.FC = () => {
   const [unlockRequests, setUnlockRequests] = useState<any[]>([]);
   const [rules, setRules] = useState<any[]>([]);
   const [fraudRings, setFraudRings] = useState<any[]>([]);
+
+  // Analytics Data
+  const [riskDistribution, setRiskDistribution] = useState<any[]>([]);
+  const [alertsTimeline, setAlertsTimeline] = useState<any[]>([]);
+  const [txVolume, setTxVolume] = useState<any[]>([]);
+  const [fraudCategories, setFraudCategories] = useState<any[]>([]);
+  const [geoData, setGeoData] = useState<any[]>([]);
+
+  // Intelligence Data
+  const [ipIntel, setIpIntel] = useState<any[]>([]);
+  const [deviceIntel, setDeviceIntel] = useState<any[]>([]);
+  const [highRiskUsers, setHighRiskUsers] = useState<any[]>([]);
+
+  // Alerts & Logs Data
+  const [fraudAlerts, setFraudAlerts] = useState<any[]>([]);
+  const [suspiciousTx, setSuspiciousTx] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [supportTickets, setSupportTickets] = useState<any[]>([]);
+
+  const [alertsPage, setAlertsPage] = useState(1);
+  const [alertsTotalPages, setAlertsTotalPages] = useState(1);
+  const [suspiciousPage, setSuspiciousPage] = useState(1);
+  const [suspiciousTotalPages, setSuspiciousTotalPages] = useState(1);
+  const [ticketsPage, setTicketsPage] = useState(1);
+  const [ticketsTotalPages, setTicketsTotalPages] = useState(1);
+  const [ipPage, setIpPage] = useState(1);
+  const [devicePage, setDevicePage] = useState(1);
+  const [highRiskPage, setHighRiskPage] = useState(1);
+  const [fraudRingsPage, setFraudRingsPage] = useState(1);
 
   // Tab Management
   const [activeTab, setActiveTab] = useState('overview');
@@ -126,6 +156,60 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchAnalytics = async () => {
+    try {
+      const [riskRes, alertsRes, volumeRes, categoriesRes, geoRes] = await Promise.all([
+        api.get('/api/admin/analytics/risk-distribution'),
+        api.get('/api/admin/analytics/alerts-timeline'),
+        api.get('/api/admin/analytics/transaction-volume'),
+        api.get('/api/admin/analytics/fraud-categories'),
+        api.get('/api/admin/analytics/geo-distribution')
+      ]);
+      setRiskDistribution(riskRes.data || []);
+      setAlertsTimeline(alertsRes.data || []);
+      setTxVolume(volumeRes.data || []);
+      setFraudCategories(categoriesRes.data || []);
+      setGeoData(geoRes.data || []);
+    } catch (error) {
+      console.error('Failed to fetch analytics');
+    }
+  };
+
+  const fetchIntelligence = async () => {
+    try {
+      const [ipRes, deviceRes, highRiskRes] = await Promise.all([
+        api.get('/api/admin/intelligence/ip-analysis'),
+        api.get('/api/admin/intelligence/device-analysis'),
+        api.get('/api/admin/intelligence/high-risk-users')
+      ]);
+      setIpIntel(ipRes.data || []);
+      setDeviceIntel(deviceRes.data || []);
+      setHighRiskUsers(highRiskRes.data || []);
+    } catch (error) {
+      console.error('Failed to fetch intelligence');
+    }
+  };
+
+  const fetchAlertsAndLogs = async () => {
+    try {
+      const [alertsRes, suspiciousRes, logsRes, ticketsRes] = await Promise.all([
+        api.get(`/api/admin/fraud-alerts?page=${alertsPage}&per_page=10`),
+        api.get(`/api/admin/suspicious-transactions?page=${suspiciousPage}&per_page=10`),
+        api.get('/api/admin/audit-logs'),
+        api.get(`/api/admin/support-tickets/all?page=${ticketsPage}&per_page=10`)
+      ]);
+      setFraudAlerts(alertsRes.data.alerts || []);
+      setAlertsTotalPages(alertsRes.data.pages || 1);
+      setSuspiciousTx(suspiciousRes.data.transactions || []);
+      setSuspiciousTotalPages(suspiciousRes.data.pages || 1);
+      setAuditLogs(logsRes.data || []);
+      setSupportTickets(ticketsRes.data.tickets || []);
+      setTicketsTotalPages(ticketsRes.data.pages || 1);
+    } catch (error) {
+      console.error('Failed to fetch alerts and logs');
+    }
+  };
+
   // --- 3. EFFECTS ---
 
   // Initial Load & Polling
@@ -141,6 +225,19 @@ export const AdminDashboard: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [activeTab, fetchOverviewData, fetchTransactions, fetchUsers]);
+
+  // Load data when switching to analytics/intelligence/alerts tabs
+  useEffect(() => {
+    if (activeTab === 'analytics') fetchAnalytics();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'intelligence') fetchIntelligence();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'alerts-logs') fetchAlertsAndLogs();
+  }, [activeTab, alertsPage, suspiciousPage, ticketsPage]);
 
   // Fetch on Tab Change or Search/Page change (debounced effect could be added for search)
   useEffect(() => {
@@ -268,7 +365,7 @@ export const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-red-500/30">
+    <div className="min-h-screen bg-gray-900 text-white font-sans selection:bg-blue-500/30">
       {/* TOAST & MODALS */}
       {showToast && (
         <div className="fixed top-6 right-6 z-[100] animate-in slide-in-from-right duration-300">
@@ -302,7 +399,7 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5">
+      <header className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-purple-600 flex items-center justify-center shadow-lg shadow-red-500/20">
@@ -321,8 +418,8 @@ export const AdminDashboard: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-8">
 
-        {/* STATS HEADER - UNIQUE DESIGN */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* STATS HEADER - ENHANCED */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Main Hero Stat */}
           <div className="md:col-span-2 bg-gradient-to-br from-red-600/20 via-purple-900/20 to-black border border-red-500/30 rounded-2xl p-6 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-red-500/20 transition-all"></div>
@@ -346,43 +443,58 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Secondary Stats */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6 hover:border-blue-500/30 transition-all hover:shadow-lg hover:shadow-blue-500/5 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Total Users</p>
-                <h3 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                  {stats?.total_users || 0}
-                </h3>
-              </div>
-              <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-                <Users className="w-5 h-5 text-blue-400" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6 hover:border-yellow-500/30 transition-all hover:shadow-lg hover:shadow-yellow-500/5 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Blocked Today</p>
-                <h3 className="text-2xl font-bold text-white group-hover:text-yellow-400 transition-colors">
-                  {stats?.blocked_transactions || 0}
-                </h3>
-              </div>
-              <div className="p-2 bg-yellow-500/10 rounded-lg group-hover:bg-yellow-500/20 transition-colors">
-                <Shield className="w-5 h-5 text-yellow-500" />
-              </div>
-            </div>
-          </div>
+          {/* stat Cards Grid */}
+          <StatCard
+            key="stat-users"
+            label="Total Users"
+            value={stats?.total_users || 0}
+            icon={<Users className="w-5 h-5 text-blue-400" />}
+            color="blue"
+          />
+          <StatCard
+            key="stat-blocked"
+            label="Blocked Today"
+            value={stats?.blocked_transactions || 0}
+            icon={<Shield className="w-5 h-5 text-yellow-500" />}
+            color="yellow"
+          />
+          <StatCard
+            key="stat-alerts"
+            label="Fraud Alerts"
+            value={`${stats?.total_fraud_alerts || 0} (${stats?.fraud_alerts_today || 0} today)`}
+            icon={<AlertTriangle className="w-5 h-5 text-red-400" />}
+            color="red"
+          />
+          <StatCard
+            key="stat-rings"
+            label="Fraud Rings"
+            value={stats?.fraud_rings_detected || 0}
+            icon={<Network className="w-5 h-5 text-purple-400" />}
+            color="purple"
+          />
+          <StatCard
+            key="stat-locked"
+            label="Locked Accounts"
+            value={stats?.locked_accounts || 0}
+            icon={<Lock className="w-5 h-5 text-orange-400" />}
+            color="orange"
+          />
+          <StatCard
+            key="stat-high-risk"
+            label="High-Risk Users"
+            value={stats?.high_risk_users || 0}
+            icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+            color="red"
+          />
         </div>
 
         {/* TABS */}
-        <div className="flex flex-wrap items-center gap-2 mb-6 p-1 bg-white/5 rounded-xl w-full md:w-fit">
-          {['overview', 'transactions', 'users', 'rules', 'requests', 'fraud-rings'].map(tab => (
+        <div className="flex flex-wrap items-center gap-2 mb-6 p-1 bg-white/5 rounded-xl w-full">
+          {['overview', 'analytics', 'intelligence', 'alerts-logs', 'transactions', 'users', 'rules', 'requests', 'fraud-rings'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 capitalize ${activeTab === tab
+              className={`px-4 py-2.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 capitalize ${activeTab === tab
                 ? 'bg-red-600 text-white shadow-lg shadow-red-500/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -767,7 +879,7 @@ export const AdminDashboard: React.FC = () => {
               <Button onClick={fetchFraudRings} className="bg-red-600">Scan Now</Button>
             </div>
             <div className="grid gap-4">
-              {fraudRings.map((ring, i) => (
+              {fraudRings.slice((fraudRingsPage - 1) * 5, fraudRingsPage * 5).map((ring, i) => (
                 <div key={ring.ip_address || i} className="bg-white/5 p-4 rounded-xl border border-white/5">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -785,10 +897,491 @@ export const AdminDashboard: React.FC = () => {
               ))}
               {fraudRings.length === 0 && <div className="text-center py-10 text-gray-500">No active fraud rings detected.</div>}
             </div>
+            {fraudRings.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <PaginationControls
+                  page={fraudRingsPage}
+                  totalPages={Math.ceil(fraudRings.length / 5)}
+                  setPage={setFraudRingsPage}
+                  loading={false}
+                />
+              </div>
+            )}
           </Card>
         )}
 
-      </main>
+        {/* --- ANALYTICS TAB --- */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Risk Distribution */}
+              <Card className="bg-[#111] border-white/5 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-lg font-bold text-white">Risk Score Distribution</h3>
+                </div>
+                <div className="space-y-3">
+                  {riskDistribution.map((item, idx) => (
+                    <div key={idx}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-400">{item.range}</span>
+                        <span className="text-white font-semibold">{item.count}</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${item.range === 'Critical' ? 'bg-red-500' :
+                            item.range === 'High' ? 'bg-orange-500' :
+                              item.range === 'Medium' ? 'bg-yellow-500' :
+                                item.range === 'Low' ? 'bg-green-500' : 'bg-blue-500'
+                            }`}
+                          style={{ width: `${Math.min(100, (item.count / Math.max(...riskDistribution.map(r => r.count), 1)) * 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Fraud Categories Pie */}
+              <Card className="bg-[#111] border-white/5 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <PieChart className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-bold text-white">Fraud Categories</h3>
+                </div>
+                <div className="space-y-2">
+                  {fraudCategories.slice(0, 8).map((cat, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-white/5 rounded">
+                      <span className="text-sm text-gray-300">{cat.category}</span>
+                      <span className="text-sm font-bold text-white">{cat.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* Alerts Timeline */}
+            <Card className="bg-[#111] border-white/5 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-green-400" />
+                <h3 className="text-lg font-bold text-white">Alerts Over Time (Last 30 Days)</h3>
+              </div>
+              <div className="h-48 flex items-end gap-1">
+                {alertsTimeline.map((day, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center group">
+                    <div
+                      className="w-full bg-gradient-to-t from-red-600 to-red-400 rounded-t hover:opacity-80 transition-all"
+                      style={{ height: `${Math.max(5, (day.count / Math.max(...alertsTimeline.map(d => d.count), 1)) * 100)}%` }}
+                      title={`${day.date}: ${day.count} alerts`}
+                    ></div>
+                    {idx % 5 === 0 && (
+                      <span className="text-[8px] text-gray-600 mt-1">{day.date?.slice(-5)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Geographic Distribution - Heatmap */}
+            <Card className="bg-[#111] border-white/5 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <MapPin className="w-5 h-5 text-green-400" />
+                <h3 className="text-lg font-bold text-white">Geographic Distribution</h3>
+              </div>
+              <div className="max-h-80 overflow-y-auto space-y-3">
+                {geoData.slice(0, 20).map((location, idx) => {
+                  const maxCount = Math.max(...geoData.map((l: any) => l.count || 0));
+                  const percentage = maxCount > 0 ? ((location.count || 0) / maxCount) * 100 : 0;
+                  const intensity = Math.floor((percentage / 100) * 5);
+
+                  const getHeatColor = (intensity: number) => {
+                    const colors = [
+                      'bg-green-900/40',
+                      'bg-green-700/60',
+                      'bg-green-600/80',
+                      'bg-green-500',
+                      'bg-green-400',
+                      'bg-green-300'
+                    ];
+                    return colors[Math.min(intensity, 5)];
+                  };
+
+                  return (
+                    <div key={`geo-${idx}`} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-300">
+                          {location.location || 'Unknown Location'}
+                        </span>
+                        <span className="text-green-400 font-bold">{location.count} txns</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${getHeatColor(intensity)}`}
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {geoData.length === 0 && <p className="text-gray-500 text-center py-8">No geographic data available</p>}
+              </div>
+            </Card>
+          </div >
+        )
+        }
+
+        {/* --- INTELLIGENCE TAB --- */}
+        {
+          activeTab === 'intelligence' && (
+            <div className="space-y-6">
+              {/* IP Intelligence */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <Wifi className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-lg font-bold text-white">IP Intelligence</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">IP Address</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Users</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Transactions</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Avg Risk</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Risk Level</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {ipIntel.slice((ipPage - 1) * 10, ipPage * 10).map((ip, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6 text-sm font-mono text-cyan-400">{ip.ip_address}</td>
+                          <td className="py-3 px-6 text-sm text-white">{ip.user_count}</td>
+                          <td className="py-3 px-6 text-sm text-gray-400">{ip.transaction_count}</td>
+                          <td className="py-3 px-6 text-sm font-bold text-yellow-400">{ip.avg_risk_score}</td>
+                          <td className="py-3 px-6">
+                            <span className={`text-xs px-2 py-1 rounded ${ip.risk_level === 'CRITICAL' ? 'bg-red-500/20 text-red-400' :
+                              ip.risk_level === 'HIGH' ? 'bg-orange-500/20 text-orange-400' :
+                                'bg-yellow-500/20 text-yellow-400'
+                              }`}>{ip.risk_level}</span>
+                          </td>
+                        </tr>
+                      ))}
+                      {ipIntel.length === 0 && (
+                        <tr><td colSpan={5} className="py-8 text-center text-gray-500">No suspicious IP activity detected</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-white/5">
+                  <PaginationControls
+                    page={ipPage}
+                    totalPages={Math.ceil(ipIntel.length / 10)}
+                    setPage={setIpPage}
+                    loading={false}
+                  />
+                </div>
+              </Card>
+
+              {/* Device Intelligence */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-bold text-white">Device Intelligence</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Device ID</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Users</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Transactions</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Risk</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {deviceIntel.slice((devicePage - 1) * 10, devicePage * 10).map((dev, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6 text-sm font-mono text-gray-300">{dev.device_id}</td>
+                          <td className="py-3 px-6 text-sm text-white">{dev.user_count}</td>
+                          <td className="py-3 px-6 text-sm text-gray-400">{dev.transaction_count}</td>
+                          <td className="py-3 px-6">
+                            <span className={`text-xs px-2 py-1 rounded ${dev.risk_level === 'CRITICAL' ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'
+                              }`}>{dev.risk_level}</span>
+                          </td>
+                        </tr>
+                      ))}
+                      {deviceIntel.length === 0 && (
+                        <tr><td colSpan={4} className="py-8 text-center text-gray-500">No suspicious device activity detected</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-white/5">
+                  <PaginationControls
+                    page={devicePage}
+                    totalPages={Math.ceil(deviceIntel.length / 10)}
+                    setPage={setDevicePage}
+                    loading={false}
+                  />
+                </div>
+              </Card>
+
+              {/* High-Risk Users */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <h3 className="text-lg font-bold text-white">High-Risk Users</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Email</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Trust Score</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Status</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Failed TX</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Avg Risk</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {highRiskUsers.slice((highRiskPage - 1) * 20, highRiskPage * 20).map((user, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6 text-sm text-white font-medium">{user.email}</td>
+                          <td className="py-3 px-6">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-gray-800 rounded-full h-1.5">
+                                <div
+                                  className={`h-1.5 rounded-full ${user.trust_score < 10 ? 'bg-red-500' :
+                                    user.trust_score < 30 ? 'bg-orange-500' : 'bg-yellow-500'
+                                    }`}
+                                  style={{ width: `${user.trust_score}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-gray-400">{user.trust_score}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-6">
+                            {user.is_locked && <span className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded">LOCKED</span>}
+                          </td>
+                          <td className="py-3 px-6 text-sm text-gray-400">{user.failed_transactions}/{user.total_transactions}</td>
+                          <td className="py-3 px-6 text-sm font-bold text-yellow-400">{user.avg_risk_score}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-white/5">
+                  <PaginationControls
+                    page={highRiskPage}
+                    totalPages={Math.ceil(highRiskUsers.length / 20)}
+                    setPage={setHighRiskPage}
+                    loading={false}
+                  />
+                </div>
+              </Card>
+            </div>
+          )
+        }
+
+        {/* --- ALERTS & LOGS TAB --- */}
+        {
+          activeTab === 'alerts-logs' && (
+            <div className="space-y-6">
+              {/* Fraud Alerts */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <h3 className="text-lg font-bold text-white">Fraud Alerts</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Alert Level</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Description</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">User</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Amount</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {fraudAlerts.map((alert, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6">
+                            <span className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded">{alert.alert_level}</span>
+                          </td>
+                          <td className="py-3 px-6 text-sm text-gray-300">{alert.description}</td>
+                          <td className="py-3 px-6 text-sm text-white">{alert.transaction?.user_email || 'Unknown'}</td>
+                          <td className="py-3 px-6 text-sm text-cyan-400">{formatIndianCurrency(alert.transaction?.amount || 0)}</td>
+                          <td className="py-3 px-6">
+                            {alert.is_resolved ? (
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {fraudAlerts.length === 0 && (
+                        <tr><td colSpan={5} className="py-8 text-center text-gray-500">No fraud alerts</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-white/5">
+                  <PaginationControls page={alertsPage} totalPages={alertsTotalPages} setPage={setAlertsPage} loading={false} />
+                </div>
+              </Card>
+
+              {/* Suspicious Transactions */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-yellow-400" />
+                  <h3 className="text-lg font-bold text-white">Suspicious Transactions (Risk &gt; 0.7)</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">User</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Amount</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Risk Score</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Reason</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">IP</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {suspiciousTx.map((tx, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6 text-sm text-white">{tx.user_email}</td>
+                          <td className="py-3 px-6 text-sm text-cyan-400">{formatIndianCurrency(tx.amount)}</td>
+                          <td className="py-3 px-6 text-sm font-bold text-red-400">{tx.risk_score.toFixed(2)}</td>
+                          <td className="py-3 px-6 text-xs text-gray-400">{tx.risk_reason?.slice(0, 50)}...</td>
+                          <td className="py-3 px-6 text-xs font-mono text-gray-500">{tx.ip_address}</td>
+                        </tr>
+                      ))}
+                      {suspiciousTx.length === 0 && (
+                        <tr><td colSpan={5} className="py-8 text-center text-gray-500">No suspicious transactions</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-white/5">
+                  <PaginationControls page={suspiciousPage} totalPages={suspiciousTotalPages} setPage={setSuspiciousPage} loading={false} />
+                </div>
+              </Card>
+
+              {/* Audit Logs */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-400" />
+                  <h3 className="text-lg font-bold text-white">Audit Logs</h3>
+                </div>
+                <div className="overflow-x-auto max-h-80">
+                  <table className="w-full">
+                    <thead className="bg-white/5 sticky top-0">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Action</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Details</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">IP</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {auditLogs.slice(0, 30).map((log, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6 text-sm font-semibold text-purple-400">{log.action}</td>
+                          <td className="py-3 px-6 text-xs text-gray-400">{log.details}</td>
+                          <td className="py-3 px-6 text-xs font-mono text-gray-500">{log.ip}</td>
+                          <td className="py-3 px-6 text-xs text-gray-500">{new Date(log.time).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                      {auditLogs.length === 0 && (
+                        <tr><td colSpan={4} className="py-8 text-center text-gray-500">No audit logs</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              {/* Support Tickets */}
+              <Card className="bg-[#111] border-white/5 p-0 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-green-400" />
+                  <h3 className="text-lg font-bold text-white">Support Tickets</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">ID</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">User</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Subject</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Status</th>
+                        <th className="text-left py-3 px-6 text-xs text-gray-400 uppercase">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {supportTickets.map((ticket, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-3 px-6 text-sm text-gray-400">#{ticket.id}</td>
+                          <td className="py-3 px-6 text-sm text-white">{ticket.user_email}</td>
+                          <td className="py-3 px-6 text-sm text-gray-300">{ticket.subject}</td>
+                          <td className="py-3 px-6">
+                            <span className={`text-xs px-2 py-1 rounded ${ticket.status === 'OPEN' ? 'bg-green-500/20 text-green-400' :
+                              ticket.status === 'CLOSED' ? 'bg-gray-500/20 text-gray-400' :
+                                'bg-yellow-500/20 text-yellow-400'
+                              }`}>{ticket.status}</span>
+                          </td>
+                          <td className="py-3 px-6 text-xs text-gray-500">{new Date(ticket.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                      {supportTickets.length === 0 && (
+                        <tr><td colSpan={5} className="py-8 text-center text-gray-500">No support tickets</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 border-t border-white/5">
+                  <PaginationControls page={ticketsPage} totalPages={ticketsTotalPages} setPage={setTicketsPage} loading={false} />
+                </div>
+              </Card>
+            </div>
+          )
+        }
+
+      </main >
+    </div >
+  );
+};
+
+// Helper Component for Stat Cards
+const StatCard: React.FC<{
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+}> = ({ label, value, icon, color }) => {
+  const colors: Record<string, string> = {
+    blue: 'border-blue-500/30 hover:shadow-blue-500/5',
+    yellow: 'border-yellow-500/30 hover:shadow-yellow-500/5',
+    red: 'border-red-500/30 hover:shadow-red-500/5',
+    purple: 'border-purple-500/30 hover:shadow-purple-500/5',
+    orange: 'border-orange-500/30 hover:shadow-orange-500/5',
+    green: 'border-green-500/30 hover:shadow-green-500/5',
+  };
+  return (
+    <div className={`bg-[#111] border border-white/5 rounded-2xl p-6 hover:${colors[color]} transition-all hover:shadow-lg group`}>
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">{label}</p>
+          <h3 className="text-xl font-bold text-white">
+            {value}
+          </h3>
+        </div>
+        <div className={`p-2 bg-${color}-500/10 rounded-lg group-hover:bg-${color}-500/20 transition-colors`}>
+          {icon}
+        </div>
+      </div>
     </div>
   );
 };

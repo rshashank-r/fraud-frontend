@@ -19,16 +19,15 @@ const Landing: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-x-hidden">
-      {/* Animated Background */}
+    <div className="min-h-screen bg-gray-900 text-white overflow-x-hidden">
+      {/* Animated Background - Simplified */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '700ms' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1400ms' }}></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
       </div>
 
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-slate-900/95 backdrop-blur-lg border-b border-cyan-500/20 shadow-xl' : 'bg-transparent'
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-gray-800/95 backdrop-blur-lg border-b border-gray-700 shadow-xl' : 'bg-transparent'
         }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-20">
@@ -50,13 +49,13 @@ const Landing: React.FC = () => {
               <a href="#contact" className="text-gray-300 hover:text-cyan-400 transition-colors">Contact</a>
               <Button
                 onClick={() => navigate('/login')}
-                className="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-6 py-2"
+                className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 px-6 py-2 font-semibold"
               >
                 Login
               </Button>
               <Button
                 onClick={() => navigate('/register')}
-                className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 px-6 py-2 shadow-lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6 py-2 shadow-lg"
               >
                 Open Account
               </Button>
@@ -85,10 +84,10 @@ const Landing: React.FC = () => {
               <a href="#about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-300 hover:text-cyan-400 transition-colors">About</a>
               <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-300 hover:text-cyan-400 transition-colors">Contact</a>
               <div className="pt-4 space-y-2">
-                <Button onClick={() => navigate('/login')} className="w-full bg-slate-800 border border-slate-600">
+                <Button onClick={() => navigate('/login')} className="w-full bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 font-semibold">
                   Login
                 </Button>
-                <Button onClick={() => navigate('/register')} className="w-full bg-gradient-to-r from-cyan-600 to-purple-600">
+                <Button onClick={() => navigate('/register')} className="w-full bg-gradient-to-r from-blue-600 to-blue-700">
                   Open Account
                 </Button>
               </div>
@@ -103,9 +102,9 @@ const Landing: React.FC = () => {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
             <div className="space-y-6 sm:space-y-8 z-10 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full">
-                <Zap className="w-4 h-4 text-cyan-400" />
-                <span className="text-xs sm:text-sm text-cyan-300">AI-Powered Banking Platform</span>
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-full">
+                <Zap className="w-4 h-4 text-blue-400" />
+                <span className="text-xs sm:text-sm text-blue-300">AI-Powered Banking Platform</span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
@@ -115,7 +114,7 @@ const Landing: React.FC = () => {
                 </span>
               </h1>
 
-              <p className="text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed max-w-xl mx-auto lg:mx-0">
+              <p className="text-base sm:text-lg md:text-xl text-gray-200 leading-relaxed max-w-xl mx-auto lg:mx-0">
                 Experience secure, instant banking powered by advanced AI fraud detection.
                 Your money, protected 24/7 with military-grade encryption.
               </p>
@@ -123,14 +122,14 @@ const Landing: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Button
                   onClick={() => navigate('/register')}
-                  className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg group shadow-xl"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg group shadow-xl"
                 >
                   Open Free Account
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button
                   onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg"
+                  className="bg-transparent hover:bg-white/10 border-2 border-white text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg"
                 >
                   Explore Features
                 </Button>
@@ -144,8 +143,8 @@ const Landing: React.FC = () => {
                   { value: '24/7', label: 'Protection' }
                 ].map((stat, i) => (
                   <div key={i} className="text-center lg:text-left">
-                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-cyan-400">{stat.value}</div>
-                    <div className="text-xs sm:text-sm text-gray-400 mt-1">{stat.label}</div>
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-400">{stat.value}</div>
+                    <div className="text-xs sm:text-sm text-gray-300 mt-1">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -214,7 +213,7 @@ const Landing: React.FC = () => {
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               Banking Made Secure & Simple
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mx-auto px-4">
+            <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-2xl mx-auto px-4">
               Advanced technology meets seamless user experience
             </p>
           </div>
@@ -271,7 +270,7 @@ const Landing: React.FC = () => {
                   <feature.icon className={`w-6 h-6 sm:w-8 sm:h-8 text-${feature.color}-400`} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-sm sm:text-base text-gray-400">{feature.description}</p>
+                <p className="text-sm sm:text-base text-gray-200">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -296,7 +295,7 @@ const Landing: React.FC = () => {
                   >
                     <item.icon className="w-8 h-8 sm:w-10 sm:h-10 text-cyan-400 mb-3 sm:mb-4" />
                     <h4 className="font-bold text-sm sm:text-base mb-1 sm:mb-2">{item.title}</h4>
-                    <p className="text-xs sm:text-sm text-gray-400">{item.desc}</p>
+                    <p className="text-xs sm:text-sm text-gray-200">{item.desc}</p>
                   </div>
                 ))}
               </div>
@@ -306,7 +305,7 @@ const Landing: React.FC = () => {
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
                 Your Security is Our <span className="text-cyan-400">Priority</span>
               </h2>
-              <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8">
+              <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 sm:mb-8">
                 We use advanced AI and machine learning to protect your money from fraud and unauthorized access.
                 Every transaction is monitored in real-time to ensure maximum security.
               </p>
@@ -319,10 +318,34 @@ const Landing: React.FC = () => {
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3 justify-center lg:justify-start">
                     <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-400 flex-shrink-0" />
-                    <span className="text-sm sm:text-base text-gray-300">{item}</span>
+                    <span className="text-sm sm:text-base text-gray-200">{item}</span>
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section - Student Project */}
+      <section id="about" className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">
+            About This Project
+          </h2>
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 sm:p-8">
+            <p className="text-base sm:text-lg text-gray-200 mb-4">
+              This is a <span className="text-blue-400 font-semibold">Final Year Student Project</span> developed as part of academic research in financial security and fraud detection.
+            </p>
+            <p className="text-sm sm:text-base text-gray-300 mb-4">
+              The system demonstrates the application of advanced AI and machine learning techniques for real-time fraud detection in banking transactions.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
+              {['AI/ML Integration', 'Real-time Detection', 'Secure Architecture', 'Academic Research'].map((tag, i) => (
+                <span key={i} className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-full text-sm text-blue-300">
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -333,7 +356,7 @@ const Landing: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
             <h3 className="text-xl sm:text-2xl font-bold mb-2">Trusted by Thousands</h3>
-            <p className="text-sm sm:text-base text-gray-400">Join our growing community of secure banking users</p>
+            <p className="text-sm sm:text-base text-gray-300">Join our growing community of secure banking users</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {[
@@ -344,7 +367,7 @@ const Landing: React.FC = () => {
             ].map((stat, i) => (
               <div key={i} className="text-center p-4 sm:p-6 bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-700">
                 <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-cyan-400 mb-1 sm:mb-2">{stat.value}</div>
-                <div className="text-xs sm:text-sm text-gray-400">{stat.label}</div>
+                <div className="text-xs sm:text-sm text-gray-300">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -357,19 +380,19 @@ const Landing: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
             Ready to Experience Secure Banking?
           </h2>
-          <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 px-4">
+          <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 sm:mb-8 px-4">
             Open your free account in minutes and start banking with complete peace of mind
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-12">
             <Button
               onClick={() => navigate('/register')}
-              className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg shadow-xl"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg shadow-xl"
             >
               Open Free Account
             </Button>
             <Button
               onClick={() => navigate('/login')}
-              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg"
+              className="bg-white text-gray-900 hover:bg-gray-100 border-2 border-gray-300 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold"
             >
               Login to Account
             </Button>

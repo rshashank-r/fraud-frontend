@@ -776,23 +776,41 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
+  // Loading text animation state
+  const [loadingText, setLoadingText] = React.useState('Connecting to server...');
+
+  React.useEffect(() => {
+    const texts = [
+      'Connecting to server...',
+      'Authenticating session...',
+      'Loading profile data...',
+      'Initializing dashboard...'
+    ];
+    let index = 0;
+    const interval = setInterval(() => {
+      index = (index + 1) % texts.length;
+      setLoadingText(texts[index]);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
   // 🚀 Full Page Loading Animation
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center relative overflow-hidden">
         {/* Background Gradients */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
 
         <div className="pulse-ring w-24 h-24 mb-8"></div>
         <h2 className="text-2xl font-bold text-white mb-2 animate-pulse">SecureBank AI</h2>
-        <p className="text-cyan-400 font-mono">Establishing Secure Connection...</p>
+        <p className="text-cyan-400 font-mono animate-pulse">{loadingText}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
