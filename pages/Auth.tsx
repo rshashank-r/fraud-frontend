@@ -8,6 +8,7 @@ import {
 import { Button } from '../components/ui';
 import Captcha from '../components/Captcha';
 import { authAPI } from '../services/api';
+import { getEnhancedFingerprint } from '../utils/securityUtils';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -83,13 +84,31 @@ const Auth: React.FC = () => {
 
     try {
       if (isLogin) {
-        // ✅ LOGIN - Step 1
+        // ✅ LOGIN - Step 1 with Enhanced Security Fingerprinting
         if (!captchaToken) {
           setError('Please complete the CAPTCHA');
           setLoading(false);
           return;
         }
-        const response = await authAPI.login(email, password, captchaToken);
+
+        // Collect enhanced device fingerprint with security checks
+        const fingerprint = await getEnhancedFingerprint();
+
+        // Send login request with security data
+        const response = await authAPI.login(
+          email,
+          password,
+          captchaToken,
+          undefined, // lat
+          undefined, // lon
+          {
+            // Pass security flags to backend via fingerprint
+            is_webdriver: fingerprint.developer_tools_enabled,
+            is_emulator: fingerprint.is_emulator,
+            is_rooted: fingerprint.is_rooted,
+            ...fingerprint
+          }
+        );
 
         // Check if verification is required (202 status)
         if (response.verification_required) {
@@ -131,7 +150,28 @@ const Auth: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      setError(err.response?.data?.error || 'Authentication failed. Please try again.');
+
+      // Handle specific security blocks with clear messages
+      const errorMessage = err.response?.data?.error || 'Authentication failed. Please try again.';
+      const riskFactors = err.response?.data?.risk_factors || [];
+
+      if (errorMessage.includes('suspicious device') || errorMessage.includes('Login denied')) {
+        // Security-based login denial (not account freeze)
+        if (riskFactors.some((f: string) => f.includes('Developer tools'))) {
+          setError('🚫 Access denied: Developer tools detected. Please close DevTools and login again.');
+        } else if (riskFactors.some((f: string) => f.includes('Emulator'))) {
+          setError('🚫 Access denied: Automated browser detected. Please use a real device to login.');
+        } else if (riskFactors.some((f: string) => f.includes('Rooted') || f.includes('jailbroken'))) {
+          setError('🚫 Access denied: Rooted device detected. Please use a secure device to login.');
+        } else {
+          setError(`🚫 Access denied from suspicious device. ${riskFactors.join(', ')}`);
+        }
+      } else if (errorMessage.includes('frozen') || errorMessage.includes('Account frozen')) {
+        // Actual account freeze (different from device-based denial)
+        setError(`🚫 Account frozen due to security concerns. Please contact support.`);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
