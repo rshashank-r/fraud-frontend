@@ -122,14 +122,32 @@ const Auth: React.FC = () => {
           }
         } else {
           // Direct login without 2FA
+          console.log('Login response:', response);
+          console.log('Token:', response.access_token || response.token);
+          console.log('Role:', response.role);
+
           if (response.access_token || response.token) {
             const token = response.access_token || response.token;
-            login(token, response.role);
+            const userRole = response.role;
+
+            console.log('Calling login() with token:', token, 'role:', userRole);
+            login(token, userRole);
+
+            // Verify localStorage
+            console.log('Token in localStorage:', localStorage.getItem('token'));
+            console.log('Role in localStorage:', localStorage.getItem('role'));
 
             setSuccess('Login successful!');
+
+            const redirectPath = userRole === 'ADMIN' ? '/admin' : '/dashboard';
+            console.log('Redirecting to:', redirectPath);
+
             setTimeout(() => {
-              navigate(response.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
+              navigate(redirectPath, { replace: true });
             }, 1000);
+          } else {
+            console.error('No token in response!', response);
+            setError('Login failed: No authentication token received');
           }
         }
       } else {
