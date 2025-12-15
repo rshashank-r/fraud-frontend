@@ -41,3 +41,6 @@ coverage
 # Note: Keep package-lock.json committed for consistent deployments!
 # package-lock.json
 # yarn.lock
+FRONTEND_INTEGRATION.md
+FRONTEND_README.md
+INTEGRATION_EXAMPLES.tsx

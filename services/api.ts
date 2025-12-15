@@ -94,8 +94,23 @@ export default api;
 // AUTH API
 // ==========================================
 export const authAPI = {
-  login: async (email: string, password: string, captchaToken?: string) => {
-    const response = await api.post('/api/auth/login', { email, password, captcha_token: captchaToken });
+  login: async (
+    email: string,
+    password: string,
+    captchaToken?: string,
+    lat?: number,
+    lon?: number,
+    fingerprint?: any
+  ) => {
+    const response = await api.post('/api/auth/login', {
+      email,
+      password,
+      captcha_token: captchaToken,
+      lat,
+      lon,
+      // Enhanced fingerprint data
+      ...(fingerprint || {})
+    });
     return response.data;
   },
 
@@ -222,6 +237,7 @@ export const transactionAPI = {
   },
 
   processPayment: async (paymentData: any) => {
+    // paymentData should include: amount, receiver_account, transaction_type, nonce, lat, lon
     const response = await api.post('/api/tx/pay', paymentData);
     return response.data;
   },
@@ -341,3 +357,66 @@ export const alertsAPI = {
     return response.data;
   },
 };
+
+// ==========================================
+// ADMIN SECURITY API (NEW)
+// ==========================================
+export const adminSecurityAPI = {
+  // Security Events
+  getSecurityEvents: async (filters: any = {}) => {
+    const params = new URLSearchParams(filters);
+    const response = await api.get(`/api/admin/security-events?${params}`);
+    return response.data;
+  },
+
+  resolveSecurityEvent: async (eventId: number, data: { notes: string }) => {
+    const response = await api.post(`/api/admin/security-events/${eventId}/resolve`, data);
+    return response.data;
+  },
+
+  getSecurityStats: async () => {
+    const response = await api.get('/api/admin/security-events/stats');
+    return response.data;
+  },
+
+  // IP Reputation
+  getIPReputation: async (filters: any = {}) => {
+    const params = new URLSearchParams(filters);
+    const response = await api.get(`/api/admin/ip-reputation?${params}`);
+    return response.data;
+  },
+
+  blacklistIP: async (data: { ip_address: string; reason: string }) => {
+    const response = await api.post('/api/admin/ip-reputation/blacklist', data);
+    return response.data;
+  },
+
+  // Honeypots
+  getHoneypots: async () => {
+    const response = await api.get('/api/admin/honeypots');
+    return response.data;
+  },
+
+  createHoneypot: async (data?: any) => {
+    const response = await api.post('/api/admin/honeypots', data || {});
+    return response.data;
+  },
+
+  // Progressive Lockouts
+  applyLockout: async (userId: string, data: { level: number; reason: string }) => {
+    const response = await api.post(`/api/admin/users/${userId}/lockout`, data);
+    return response.data;
+  },
+
+  getLockoutStatus: async (userId: string) => {
+    const response = await api.get(`/api/admin/users/${userId}/lockout/status`);
+    return response.data;
+  },
+
+  // SOC Dashboard
+  getDashboardMetrics: async () => {
+    const response = await api.get('/api/admin/dashboard/metrics');
+    return response.data;
+  },
+};
+
