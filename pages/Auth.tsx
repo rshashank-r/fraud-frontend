@@ -149,29 +149,53 @@ const Auth: React.FC = () => {
         }, 2000);
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
+      console.error('=== AUTH ERROR DEBUG ===');
+      console.error('Full error:', err);
+      console.error('Response status:', err.response?.status);
+      console.error('Response data:', JSON.stringify(err.response?.data, null, 2));
+      console.error('Response headers:', err.response?.headers);
 
       // Handle specific security blocks with clear messages
-      const errorMessage = err.response?.data?.error || 'Authentication failed. Please try again.';
-      const riskFactors = err.response?.data?.risk_factors || [];
+      const responseData = err.response?.data || {};
+      const errorMessage = responseData.error || err.message || 'Authentication failed. Please try again.';
+      const backendMessage = responseData.message || '';
+      const riskFactors = responseData.risk_factors || [];
 
-      if (errorMessage.includes('suspicious device') || errorMessage.includes('Login denied')) {
+      console.log('Extracted error message:', errorMessage);
+      console.log('Extracted backend message:', backendMessage);
+      console.log('Extracted risk factors:', riskFactors);
+
+      // Check for security-related denials
+      if (errorMessage.includes('suspicious device') ||
+        errorMessage.includes('Login denied') ||
+        backendMessage.includes('suspicious device') ||
+        backendMessage.includes('Developer Tools') ||
+        backendMessage.includes('Emulator') ||
+        backendMessage.includes('Rooted')) {
+
         // Security-based login denial (not account freeze)
-        if (riskFactors.some((f: string) => f.includes('Developer tools'))) {
+        if (riskFactors.some((f: string) => f.includes('Developer tools')) ||
+          backendMessage.includes('Developer Tools')) {
           setError('🚫 Access denied: Developer tools detected. Please close DevTools and login again.');
-        } else if (riskFactors.some((f: string) => f.includes('Emulator'))) {
+        } else if (riskFactors.some((f: string) => f.includes('Emulator')) ||
+          backendMessage.includes('Emulator')) {
           setError('🚫 Access denied: Automated browser detected. Please use a real device to login.');
-        } else if (riskFactors.some((f: string) => f.includes('Rooted') || f.includes('jailbroken'))) {
+        } else if (riskFactors.some((f: string) => f.includes('Rooted') || f.includes('jailbroken')) ||
+          backendMessage.includes('Rooted')) {
           setError('🚫 Access denied: Rooted device detected. Please use a secure device to login.');
         } else {
-          setError(`🚫 Access denied from suspicious device. ${riskFactors.join(', ')}`);
+          // Show backend message or risk factors
+          setError(backendMessage || `🚫 Access denied from suspicious device. ${riskFactors.join(', ')}`);
         }
       } else if (errorMessage.includes('frozen') || errorMessage.includes('Account frozen')) {
         // Actual account freeze (different from device-based denial)
         setError(`🚫 Account frozen due to security concerns. Please contact support.`);
       } else {
-        setError(errorMessage);
+        // Show the most specific message available
+        setError(backendMessage || errorMessage);
       }
+
+      console.error('Final error shown to user:', backendMessage || errorMessage);
     } finally {
       setLoading(false);
     }
