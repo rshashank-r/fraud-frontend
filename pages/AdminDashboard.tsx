@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button, Card, Input } from '../components/ui';
 import { formatIndianCurrency } from '../src/utils/formatters';
@@ -12,6 +13,7 @@ import {
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   // --- 1. STATE MANAGEMENT ---
 
@@ -251,10 +253,22 @@ export const AdminDashboard: React.FC = () => {
 
   // --- 4. ACTION HANDLERS ---
   const handleLogout = async () => {
-    try { await api.post('/api/auth/logout'); } catch (e) { }
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    navigate('/login');
+    try {
+      await api.post('/api/auth/logout');
+    } catch (e) {
+      console.error('Logout API call failed:', e);
+    }
+
+    // Show thank you message
+    showToastNotification('Thank you! Visit again soon 👋', 'success');
+
+    // Wait a moment for user to see the message
+    setTimeout(() => {
+      // Clear auth state using AuthContext
+      logout();
+      // Redirect to login page
+      navigate('/login');
+    }, 1000);
   };
 
   const handleTransactionAction = async (txId: string, action: string) => {
