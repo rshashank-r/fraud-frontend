@@ -369,13 +369,17 @@ const Auth: React.FC = () => {
                   )}
                   <input
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white text-center text-2xl tracking-widest font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-5 bg-slate-800 border-2 border-slate-700 rounded-xl text-white text-center text-3xl tracking-widest font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/30 transition-all touch-manipulation"
+                    style={{ fontSize: '28px', letterSpacing: '0.5em' }}
                     placeholder="000000"
                     maxLength={6}
                     required
                     autoFocus
+                    autoComplete="one-time-code"
                   />
                 </div>
 
