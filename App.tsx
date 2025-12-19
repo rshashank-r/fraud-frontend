@@ -6,13 +6,25 @@ import Auth from './pages/Auth';  // ✅ Single import
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Locked from './pages/Locked';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, role?: string }> = ({ children, role }) => {
   const { isAuthenticated, role: userRole, isLoading } = useAuth();
 
-  if (isLoading) return <div>Loading...</div>; // Or a spinner
+  // Wait for auth state to load before making decision
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4"></div>
+          <p className="text-white/60">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role && userRole !== role) return <Navigate to="/dashboard" replace />;
 
@@ -55,6 +67,8 @@ const App: React.FC = () => {
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        <PWAInstallPrompt />
 
         <ToastContainer
           position="top-right"
