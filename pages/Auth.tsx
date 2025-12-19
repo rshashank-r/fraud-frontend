@@ -261,6 +261,14 @@ const Auth: React.FC = () => {
         response = await authAPI.verifyEmailOTP(email, verificationCode);
       }
 
+      // ✅ Check if response exists and has data
+      if (!response) {
+        console.error('❌ API returned no response');
+        setError('Verification failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
       // ✅ DEBUGGING: Log the entire response
       console.log('=== OTP VERIFICATION RESPONSE DEBUG ===');
       console.log('Full response object:', response);
@@ -271,16 +279,16 @@ const Auth: React.FC = () => {
       console.log('Has token?', !!response?.token);
       console.log('======================================');
 
-      // ✅ Success - Token saved in authAPI methods
-      setSuccess('Verification successful! Redirecting...');
-
-      if (response && (response.access_token || response.token)) {
+      // ✅ Success - Check for token
+      if (response.access_token || response.token) {
         const token = response.access_token || response.token;
         const role = response.role;
 
         console.log('✅ OTP Verification Success. Syncing state and redirecting...');
         console.log('Token to use:', token);
         console.log('Role to use:', role);
+
+        setSuccess('Verification successful! Redirecting...');
 
         // Use the login function to sync context and localStorage
         login(token, role);
@@ -294,10 +302,14 @@ const Auth: React.FC = () => {
         setError('Verification successful, but session could not be established. Please login again.');
       }
 
-
     } catch (err: any) {
-      console.error('Verification error:', err);
-      setError(err.response?.data?.error || 'Invalid verification code. Please try again.');
+      console.error('❌ OTP Verification Error:', err);
+      console.error('Error response:', err.response);
+      console.error('Error message:', err.message);
+
+      // Handle specific error cases
+      const errorMessage = err.response?.data?.error || err.message || 'Verification failed. Please try again.';
+      setError(errorMessage);
       setVerificationCode('');
     } finally {
       setLoading(false);
