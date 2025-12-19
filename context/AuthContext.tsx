@@ -31,10 +31,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const login = (newToken: string, newRole: string) => {
-        setAuthToken(newToken); // Handle token (memory + localStorage + types)
+        console.log('🔐 AuthContext.login() called with:', { token: newToken.substring(0, 20) + '...', role: newRole });
+
+        // CRITICAL: Clear ALL old auth data first to prevent stale data
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+
+        // Set new authentication data
+        setAuthToken(newToken); // Handle token (memory + localStorage)
         localStorage.setItem('role', newRole);
+
+        // Update React state
         setToken(newToken);
         setRole(newRole);
+
+        // Verify it was saved correctly
+        console.log('✅ Saved to localStorage:', {
+            token: localStorage.getItem('token')?.substring(0, 20) + '...',
+            role: localStorage.getItem('role')
+        });
     };
 
     const logout = () => {
