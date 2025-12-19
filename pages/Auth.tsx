@@ -35,7 +35,10 @@ const Auth: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [registerAsAdmin, setRegisterAsAdmin] = useState(false);
   const [adminKey, setAdminKey] = useState('');
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  // CAPTCHA State (server-side challenge)
+  const [captchaChallengeId, setCaptchaChallengeId] = useState<string | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState<number | null>(null);
 
   // Password Strength Calculation
   const getPasswordStrength = (pass: string) => {
@@ -96,8 +99,8 @@ const Auth: React.FC = () => {
     try {
       if (isLogin) {
         // ✅ LOGIN - Step 1 with Enhanced Security Fingerprinting
-        if (!captchaToken) {
-          setError('Please complete the CAPTCHA');
+        if (!captchaChallengeId || captchaAnswer === null) {
+          setError('Please complete the verification challenge');
           setLoading(false);
           return;
         }
@@ -109,7 +112,8 @@ const Auth: React.FC = () => {
         const response = await authAPI.login(
           email,
           password,
-          captchaToken,
+          captchaChallengeId,
+          captchaAnswer,
           undefined, // lat
           undefined, // lon
           {
@@ -163,12 +167,19 @@ const Auth: React.FC = () => {
         }
       } else {
         // ✅ REGISTER
-        if (!captchaToken) {
-          setError('Please complete the CAPTCHA');
+        if (!captchaChallengeId || captchaAnswer === null) {
+          setError('Please complete the verification challenge');
           setLoading(false);
           return;
         }
-        const response = await authAPI.register(email, password, phoneNumber, registerAsAdmin ? adminKey : undefined, captchaToken);
+        const response = await authAPI.register(
+          email,
+          password,
+          phoneNumber,
+          registerAsAdmin ? adminKey : undefined,
+          captchaChallengeId,
+          captchaAnswer
+        );
         setSuccess(response.message || 'Registration successful! Please login.');
 
         // Switch to login after 2 seconds
@@ -486,7 +497,8 @@ const Auth: React.FC = () => {
                 setIsLogin(true);
                 setError('');
                 setSuccess('');
-                setCaptchaToken(null);
+                setCaptchaChallengeId(null);
+                setCaptchaAnswer(null);
               }}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${isLogin
                 ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
@@ -500,7 +512,8 @@ const Auth: React.FC = () => {
                 setIsLogin(false);
                 setError('');
                 setSuccess('');
-                setCaptchaToken(null);
+                setCaptchaChallengeId(null);
+                setCaptchaAnswer(null);
               }}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${!isLogin
                 ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
@@ -650,8 +663,14 @@ const Auth: React.FC = () => {
 
             {/* CAPTCHA (Login & Register) */}
             <Captcha
-              onVerify={(token) => setCaptchaToken(token)}
-              onError={() => setCaptchaToken(null)}
+              onVerify={(challengeId, answer) => {
+                setCaptchaChallengeId(challengeId);
+                setCaptchaAnswer(answer);
+              }}
+              onError={() => {
+                setCaptchaChallengeId(null);
+                setCaptchaAnswer(null);
+              }}
             />
 
             {/* Submit Button */}

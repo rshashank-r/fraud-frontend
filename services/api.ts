@@ -94,10 +94,17 @@ export default api;
 // AUTH API
 // ==========================================
 export const authAPI = {
+  // Get CAPTCHA challenge
+  getCaptchaChallenge: async () => {
+    const response = await api.get('/api/auth/captcha/challenge');
+    return response.data;
+  },
+
   login: async (
     email: string,
     password: string,
-    captchaToken?: string,
+    captchaChallengeId?: string,
+    captchaAnswer?: number,
     lat?: number,
     lon?: number,
     fingerprint?: any
@@ -105,7 +112,8 @@ export const authAPI = {
     const response = await api.post('/api/auth/login', {
       email,
       password,
-      captcha_token: captchaToken,
+      captcha_challenge_id: captchaChallengeId,
+      captcha_answer: captchaAnswer,
       lat,
       lon,
       // Enhanced fingerprint data
@@ -139,13 +147,21 @@ export const authAPI = {
     return response.data;
   },
 
-  register: async (email: string, password: string, phone_number?: string, adminKey?: string, captchaToken?: string) => {
+  register: async (
+    email: string,
+    password: string,
+    phone_number?: string,
+    adminKey?: string,
+    captchaChallengeId?: string,
+    captchaAnswer?: number
+  ) => {
     const config = adminKey ? { headers: { 'X-ADMIN-KEY': adminKey } } : {};
     const response = await api.post('/api/auth/register', {
       email,
       password,
       phone_number,
-      captcha_token: captchaToken
+      captcha_challenge_id: captchaChallengeId,
+      captcha_answer: captchaAnswer
     }, config);
     return response.data;
   },
