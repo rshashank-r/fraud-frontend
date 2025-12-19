@@ -12,7 +12,18 @@ import { getEnhancedFingerprint } from '../utils/securityUtils';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, role } = useAuth();
+  const userRole = role || localStorage.getItem('role');
+
+  // ✅ AUTO-REDIRECT if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && userRole) {
+      console.log('🔄 User already authenticated, redirecting from Auth...');
+      const redirectPath = userRole === 'ADMIN' ? '/admin' : '/dashboard';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, userRole, navigate]);
+
 
   // Tab State
   const [isLogin, setIsLogin] = useState(true);
@@ -244,17 +255,20 @@ const Auth: React.FC = () => {
 
       if (response && (response.access_token || response.token)) {
         const token = response.access_token || response.token;
-        // The token is already saved in authAPI methods (localStorage), 
-        // but we need to ensure AuthContext state is updated if we used useAuth().login() there?
-        // Wait, authAPI.verify2FA saves to localStorage directly in api.ts helper.
-        // We should instead call login() here to sync everything.
-        login(token, response.role);
+        const role = response.role;
+
+        console.log('✅ OTP Verification Success. Syncing state and redirecting...');
+
+        // Use the login function to sync context and localStorage
+        login(token, role);
+
+        // Immediate navigation
+        const redirectPath = role === 'ADMIN' ? '/admin' : '/dashboard';
+        navigate(redirectPath, { replace: true });
+      } else {
+        setError('Verification successful, but session could not be established. Please login again.');
       }
 
-      setTimeout(() => {
-        const role = localStorage.getItem('role');
-        navigate(role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
-      }, 1000);
 
     } catch (err: any) {
       console.error('Verification error:', err);

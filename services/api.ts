@@ -72,15 +72,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      const currentPath = window.location.pathname;
+      const currentPath = window.location.hash || window.location.pathname;
       if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-        setAuthToken(null); // Clear everything using our helper
+        setAuthToken(null);
         localStorage.removeItem('role');
 
-        // Immediate Redirect to Login
-        window.location.href = '/login';
+        // Immediate Redirect to Login using Hash
+        window.location.hash = '#/login';
 
-        // Return a never-resolving promise to prevent downstream error handling (toasts)
+        // Return a never-resolving promise to prevent downstream error handling
         return new Promise(() => { });
       }
     }

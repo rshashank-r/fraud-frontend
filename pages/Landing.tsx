@@ -1,15 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   Shield, Lock, Brain, TrendingUp, Users, CheckCircle,
   ArrowRight, Mail, Phone, MapPin, Menu, X, Zap,
   Eye, DollarSign, Globe, Award, Star, CreditCard,
-  Smartphone, Bell, BarChart3, Wallet, ArrowUpRight
+  Smartphone, Bell, BarChart3, Wallet, ArrowUpRight,
+  ChevronRight, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { Button } from '../components/ui';
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, role } = useAuth();
+  const userRole = role || localStorage.getItem('role');
+
+  // ✅ AUTO-REDIRECT if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && userRole) {
+      console.log('🔄 User already authenticated, redirecting from Landing...');
+      const redirectPath = userRole === 'ADMIN' ? '/admin' : '/dashboard';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, userRole, navigate]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
