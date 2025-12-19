@@ -147,6 +147,10 @@ export const authAPI = {
   verifyEmailOTP: async (email: string, otp: string) => {
     try {
       console.log('📤 Sending Email OTP verification request...');
+      console.log('   Email:', email);
+      console.log('   OTP:', otp);
+      console.log('   API URL:', api.defaults.baseURL + '/api/auth/verify-email-otp-login');
+
       const response = await api.post('/api/auth/verify-email-otp-login', { email, otp });
 
       console.log('📥 Email OTP API Response:');
@@ -165,8 +169,20 @@ export const authAPI = {
         console.error('❌ No token in Email OTP response!');
       }
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Email OTP Verification API Error:', error);
+      console.error('   Error name:', error.name);
+      console.error('   Error message:', error.message);
+      console.error('   Error response:', error.response);
+      console.error('   Error request:', error.request);
+      console.error('   Error config:', error.config);
+
+      // Check if it's a network error
+      if (!error.response) {
+        console.error('🌐 NETWORK ERROR: Backend not reachable!');
+        console.error('   Check if backend is running on:', api.defaults.baseURL);
+      }
+
       throw error; // Re-throw so Auth.tsx can handle it
     }
   },
