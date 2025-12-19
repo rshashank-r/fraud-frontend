@@ -145,25 +145,30 @@ export const authAPI = {
   },
 
   verifyEmailOTP: async (email: string, otp: string) => {
-    console.log('📤 Sending Email OTP verification request...');
-    const response = await api.post('/api/auth/verify-email-otp-login', { email, otp });
+    try {
+      console.log('📤 Sending Email OTP verification request...');
+      const response = await api.post('/api/auth/verify-email-otp-login', { email, otp });
 
-    console.log('📥 Email OTP API Response:');
-    console.log('  - Full response:', response);
-    console.log('  - response.data:', response.data);
-    console.log('  - access_token:', response.data?.access_token);
-    console.log('  - token:', response.data?.token);
-    console.log('  - role:', response.data?.role);
+      console.log('📥 Email OTP API Response:');
+      console.log('  - Full response:', response);
+      console.log('  - response.data:', response.data);
+      console.log('  - access_token:', response.data?.access_token);
+      console.log('  - token:', response.data?.token);
+      console.log('  - role:', response.data?.role);
 
-    if (response.data.access_token || response.data.token) {
-      const token = response.data.access_token || response.data.token;
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', response.data.role);
-      console.log('✅ Token saved to localStorage');
-    } else {
-      console.error('❌ No token in Email OTP response!');
+      if (response.data.access_token || response.data.token) {
+        const token = response.data.access_token || response.data.token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', response.data.role);
+        console.log('✅ Token saved to localStorage');
+      } else {
+        console.error('❌ No token in Email OTP response!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('❌ Email OTP Verification API Error:', error);
+      throw error; // Re-throw so Auth.tsx can handle it
     }
-    return response.data;
   },
 
   resendOTP: async (email: string) => {

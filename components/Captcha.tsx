@@ -39,14 +39,35 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
     if (/^\d*$/.test(value)) {
       setAnswer(value);
 
-      // Auto-verify when answer is provided
-      if (value && challenge) {
-        const numAnswer = parseInt(value, 10);
-        onVerify(challenge.challenge_id, numAnswer);
-        setIsVerified(true);
-      } else {
+      // Clear verified state when user changes answer
+      if (isVerified) {
         setIsVerified(false);
       }
+
+      // DO NOT auto-verify - wait for Enter key or blur
+    }
+  };
+
+  const verifyAnswer = () => {
+    if (answer && challenge && !isVerified) {
+      const numAnswer = parseInt(answer, 10);
+      if (!isNaN(numAnswer)) {
+        onVerify(challenge.challenge_id, numAnswer);
+        setIsVerified(true);
+      }
+    }
+  };
+
+  const handleAnswerBlur = () => {
+    // Verify when user finishes typing (leaves input)
+    verifyAnswer();
+  };
+
+  const handleAnswerKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Verify on Enter key
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      verifyAnswer();
     }
   };
 
@@ -111,6 +132,8 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
             pattern="[0-9]*"
             value={answer}
             onChange={handleAnswerChange}
+            onBlur={handleAnswerBlur}
+            onKeyPress={handleAnswerKeyPress}
             placeholder="Your answer"
             className={`w-full px-4 py-3 rounded-lg text-center text-lg font-semibold transition-all ${isVerified
                 ? 'bg-green-500/10 border-2 border-green-500/50 text-green-400'
@@ -130,7 +153,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
         {/* Status Text */}
         <p className={`mt-2 text-xs text-center transition-all ${isVerified ? 'text-green-400' : 'text-gray-500'
           }`}>
-          {isVerified ? '✓ Verified' : 'Solve the math problem to continue'}
+          {isVerified ? '✓ Verified - Press Enter to confirm' : 'Type answer and press Enter or click outside'}
         </p>
       </div>
     </div>
