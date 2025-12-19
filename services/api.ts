@@ -123,21 +123,45 @@ export const authAPI = {
   },
 
   verify2FA: async (email: string, code: string) => {
+    console.log('📤 Sending TOTP verification request...');
     const response = await api.post('/api/auth/verify-2fa-login', { email, code });
+
+    console.log('📥 TOTP API Response:');
+    console.log('  - Full response:', response);
+    console.log('  - response.data:', response.data);
+    console.log('  - access_token:', response.data?.access_token);
+    console.log('  - token:', response.data?.token);
+    console.log('  - role:', response.data?.role);
+
     if (response.data.access_token || response.data.token) {
       const token = response.data.access_token || response.data.token;
       localStorage.setItem('token', token);
       localStorage.setItem('role', response.data.role);
+      console.log('✅ Token saved to localStorage');
+    } else {
+      console.error('❌ No token in TOTP response!');
     }
     return response.data;
   },
 
   verifyEmailOTP: async (email: string, otp: string) => {
+    console.log('📤 Sending Email OTP verification request...');
     const response = await api.post('/api/auth/verify-email-otp-login', { email, otp });
+
+    console.log('📥 Email OTP API Response:');
+    console.log('  - Full response:', response);
+    console.log('  - response.data:', response.data);
+    console.log('  - access_token:', response.data?.access_token);
+    console.log('  - token:', response.data?.token);
+    console.log('  - role:', response.data?.role);
+
     if (response.data.access_token || response.data.token) {
       const token = response.data.access_token || response.data.token;
       localStorage.setItem('token', token);
       localStorage.setItem('role', response.data.role);
+      console.log('✅ Token saved to localStorage');
+    } else {
+      console.error('❌ No token in Email OTP response!');
     }
     return response.data;
   },

@@ -261,6 +261,16 @@ const Auth: React.FC = () => {
         response = await authAPI.verifyEmailOTP(email, verificationCode);
       }
 
+      // ✅ DEBUGGING: Log the entire response
+      console.log('=== OTP VERIFICATION RESPONSE DEBUG ===');
+      console.log('Full response object:', response);
+      console.log('response.access_token:', response?.access_token);
+      console.log('response.token:', response?.token);
+      console.log('response.role:', response?.role);
+      console.log('Has access_token?', !!response?.access_token);
+      console.log('Has token?', !!response?.token);
+      console.log('======================================');
+
       // ✅ Success - Token saved in authAPI methods
       setSuccess('Verification successful! Redirecting...');
 
@@ -269,6 +279,8 @@ const Auth: React.FC = () => {
         const role = response.role;
 
         console.log('✅ OTP Verification Success. Syncing state and redirecting...');
+        console.log('Token to use:', token);
+        console.log('Role to use:', role);
 
         // Use the login function to sync context and localStorage
         login(token, role);
@@ -277,6 +289,8 @@ const Auth: React.FC = () => {
         const redirectPath = role === 'ADMIN' ? '/admin' : '/dashboard';
         navigate(redirectPath, { replace: true });
       } else {
+        console.error('❌ NO TOKEN IN RESPONSE!');
+        console.error('Response was:', JSON.stringify(response, null, 2));
         setError('Verification successful, but session could not be established. Please login again.');
       }
 
