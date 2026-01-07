@@ -54,6 +54,45 @@ App runs on `http://localhost:3000`
 npm run build
 ```
 
+### **Mobile & PWA Support** 📱
+- **Installable App**: Add to home screen on iOS and Android
+- **Offline Capability**: Service worker caching for core assets
+- **Responsive Design**: Mobile-first approach for all dashboards
+- **Touch Optimized**: Swipe gestures and large touch targets
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    User[User Device]
+    Admin[Admin Device]
+    
+    subgraph Frontend [FraudGuard Frontend]
+        UI[React UI Layers]
+        Auth[Auth Service]
+        Sec[Security Utils]
+        PWA[Service Worker]
+    end
+
+    subgraph Backend [FraudGuard Backend]
+        API[Flask API]
+        Risk[Risk Engine]
+        ML[XGBoost Model]
+    end
+    
+    subgraph DB [Data Layer]
+        PG[PostgreSQL]
+    end
+
+    User --> |HTTPS| Frontend
+    Admin --> |HTTPS| Frontend
+    
+    Frontend --> |REST| Backend
+    PWA -.-> |Cache| Frontend
+    
+    Backend --> |SQL| DB
+```
+
 ## 📂 Project Structure
 
 ```
@@ -65,11 +104,12 @@ fraud-frontend/
 ├── components/
 │   ├── ui/                     # Reusable components
 │   ├── Captcha.tsx             # CAPTCHA verification
+│   ├── PWAInstallPrompt.tsx    # PWA installation banner
 │   └── SecurePayment.tsx       # Payment form
 ├── services/
-│   └── api.ts                  # Axios with security interceptors
+│   ├── api.ts                  # Axios with security interceptors
 ├── utils/
-│   └── securityUtils.ts        # Device detection & fingerprinting
+│   ├── securityUtils.ts        # Device detection & fingerprinting
 ├── context/
 │   └── AuthContext.tsx         # Authentication state
 └── constants.ts                # API configuration
