@@ -15,14 +15,9 @@ const Landing: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
   const userRole = role || localStorage.getItem('role');
 
-  // ✅ AUTO-REDIRECT if already authenticated
-  useEffect(() => {
-    if (isAuthenticated && userRole) {
-      console.log('🔄 User already authenticated, redirecting from Landing...');
-      const redirectPath = userRole === 'ADMIN' ? '/admin' : '/dashboard';
-      navigate(redirectPath, { replace: true });
-    }
-  }, [isAuthenticated, userRole, navigate]);
+  // Removed auto-redirect - Auth.tsx handles authentication redirects
+  // Landing page should be accessible to both authenticated and unauthenticated users
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 

@@ -9,6 +9,7 @@ import Locked from './pages/Locked';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, role?: string }> = ({ children, role }) => {
   const { isAuthenticated, role: userRole, isLoading } = useAuth();
@@ -33,57 +34,59 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, role?: string }> = (
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <HashRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Auth />} />
-          <Route path="/register" element={<Auth />} />
-          <Route path="/auth" element={<Auth />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <HashRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/register" element={<Auth />} />
+            <Route path="/auth" element={<Auth />} />
 
-          {/* Locked Account */}
-          <Route path="/locked" element={<Locked />} />
+            {/* Locked Account */}
+            <Route path="/locked" element={<Locked />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <UserDashboard />
-              </ProtectedRoute>
-            }
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute role="ADMIN">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+
+          <PWAInstallPrompt />
+
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
           />
-
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role="ADMIN">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-
-        <PWAInstallPrompt />
-
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-      </HashRouter>
-    </AuthProvider>
+        </HashRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -160,10 +160,20 @@ export const UserDashboard: React.FC = () => {
   // ==================== FETCH FUNCTIONS ====================
 
   useEffect(() => {
-    let isMounted = true; // FIXED: Cleanup flag to prevent state updates after unmount
+    let isMounted = true; // Cleanup flag to prevent state updates after unmount
 
     const loadInitialData = async () => {
       if (!isMounted) return;
+
+      // CRITICAL: Wait for token to be available before fetching
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('⏳ Token not yet available, skipping initial data load');
+        return;
+      }
+
+      console.log('✅ Token found, loading initial data...');
+
       try {
         await fetchUserProfile();
         if (!isMounted) return;
@@ -183,10 +193,14 @@ export const UserDashboard: React.FC = () => {
       }
     };
 
-    loadInitialData();
+    // Small delay to ensure token sync completes
+    const timeoutId = setTimeout(() => {
+      loadInitialData();
+    }, 100);
 
     return () => {
       isMounted = false; // Cleanup: prevent any pending state updates
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -196,8 +210,11 @@ export const UserDashboard: React.FC = () => {
   }, [txPage, user?.id]);
 
   useEffect(() => {
-    fetchDevices();
-  }, [devicePage]);
+    const token = localStorage.getItem('token');
+    if (token && user?.id) {
+      fetchDevices();
+    }
+  }, [devicePage, user?.id]);
 
   useEffect(() => {
     const handleSessionExpired = () => setShowSessionExpired(true);
@@ -267,6 +284,11 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchUserProfile = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token, skipping user profile fetch');
+      return;
+    }
     try {
       const res = await api.get('/api/auth/me');
       setUser(res.data);
@@ -279,6 +301,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchDashboardSummary = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/analytics/dashboard'); // ✅ Correct endpoint
       setDashboardSummary({
@@ -296,6 +320,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchNotifications = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/support/notifications');
       setNotifications(res.data || []);
@@ -314,6 +340,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchAlerts = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/alerts');
       setAlerts(res.data || []);
@@ -332,6 +360,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchCards = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/cards');
       setCards(res.data || []);
@@ -341,6 +371,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchDevices = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get(`/api/auth/devices?page=${devicePage}&per_page=5`);
       setDevices(res.data.devices || []);
@@ -351,6 +383,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchLoginHistory = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/auth/login-history');
       setLoginHistory(res.data || []);
@@ -360,6 +394,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchDisputes = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/support/disputes');
       setDisputes(res.data || []);
@@ -369,6 +405,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchMonthlyExpenses = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/analytics/dashboard/monthly-expenses');
       setMonthlyExpenses(res.data || []);
@@ -393,6 +431,8 @@ export const UserDashboard: React.FC = () => {
   };
 
   const fetchTickets = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       const res = await api.get('/api/support/tickets');
       setTickets(res.data || []);
@@ -404,24 +444,24 @@ export const UserDashboard: React.FC = () => {
   // ==================== HANDLER FUNCTIONS ====================
 
   const handleLogout = async () => {
-    // FIXED: Clear token IMMEDIATELY to stop any ongoing authenticated requests
+    // Clear user state FIRST to prevent any new fetches
+    setUser(null);
+
+    // Clear tokens IMMEDIATELY to stop any ongoing authenticated requests
     const token = localStorage.getItem('token');
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('loginTime');
 
-    // Try to call logout API (best effort - user is logging out anyway)
-    if (token) {
-      try {
-        await api.post('/api/auth/logout');
-      } catch (error) {
-        // Ignore errors - token already cleared
-        console.log('Logout API call failed (expected if navigating away)')
-      }
-    }
+    // Navigate to landing page IMMEDIATELY - don't wait for API call
+    navigate('/');
 
-    // Navigate immediately
-    navigate('/login');
+    // Make logout API call in background (fire-and-forget)
+    if (token) {
+      api.post('/api/auth/logout').catch(() => {
+        // Silently ignore errors - user is already logged out on frontend
+      });
+    }
   };
 
   const processPayment = async (payload: any) => {

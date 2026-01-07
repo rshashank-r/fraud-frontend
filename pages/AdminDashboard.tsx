@@ -102,7 +102,11 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // Fetch Overview Data (Stats, Recent Tx, Requests)
+  // Fetch Overview Data (Stats, Recent Tx, Requests)
   const fetchOverviewData = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const [statsRes, rulesRes, unlocksRes, recentTxRes] = await Promise.all([
         api.get('/api/admin/stats'),
@@ -122,6 +126,9 @@ export const AdminDashboard: React.FC = () => {
 
   // Fetch Full Transactions (Paginated & Search)
   const fetchTransactions = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     setTxLoading(true);
     try {
       const res = await api.get(`/api/admin/transactions?page=${txPage}&per_page=10&search=${txSearch}`);
@@ -136,6 +143,9 @@ export const AdminDashboard: React.FC = () => {
 
   // Fetch Full Users (Paginated & Search)
   const fetchUsers = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     setUserLoading(true);
     try {
       const res = await api.get(`/api/admin/users?page=${userPage}&per_page=10&search=${userSearch}`);
@@ -149,6 +159,9 @@ export const AdminDashboard: React.FC = () => {
   }, [userPage, userSearch]);
 
   const fetchFraudRings = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await api.get('/api/admin/system/fraud-rings');
       setFraudRings(res.data.fraud_rings || []);
@@ -159,6 +172,9 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const fetchAnalytics = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const [riskRes, alertsRes, volumeRes, categoriesRes, geoRes] = await Promise.all([
         api.get('/api/admin/analytics/risk-distribution'),
@@ -178,6 +194,9 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const fetchIntelligence = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const [ipRes, deviceRes, highRiskRes] = await Promise.all([
         api.get('/api/admin/intelligence/ip-analysis'),
@@ -193,6 +212,9 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const fetchAlertsAndLogs = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const [alertsRes, suspiciousRes, logsRes, ticketsRes] = await Promise.all([
         api.get(`/api/admin/fraud-alerts?page=${alertsPage}&per_page=10`),
@@ -220,6 +242,16 @@ export const AdminDashboard: React.FC = () => {
 
     const loadInitialData = async () => {
       if (!isMounted) return;
+
+      // CRITICAL: Wait for token to be available before fetching
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('⏳ Token not yet available, skipping initial data load');
+        return;
+      }
+
+      console.log('✅ Token found, loading initial data...');
+
       try {
         await fetchOverviewData();
       } catch (error) {
@@ -228,7 +260,10 @@ export const AdminDashboard: React.FC = () => {
       }
     };
 
-    loadInitialData();
+    // Small delay to ensure token sync completes
+    const timeoutId = setTimeout(() => {
+      loadInitialData();
+    }, 100);
 
     const interval = setInterval(() => {
       // Only poll if component is still mounted
@@ -242,6 +277,7 @@ export const AdminDashboard: React.FC = () => {
     return () => {
       isMounted = false; // Cleanup: prevent any pending state updates
       clearInterval(interval);
+      clearTimeout(timeoutId);
     };
   }, [activeTab, fetchOverviewData, fetchTransactions, fetchUsers]);
 
@@ -282,22 +318,16 @@ export const AdminDashboard: React.FC = () => {
 
   // --- 4. ACTION HANDLERS ---
   const handleLogout = async () => {
-    try {
-      await api.post('/api/auth/logout');
-    } catch (e) {
-      console.error('Logout API call failed:', e);
-    }
+    // Clear auth state using AuthContext
+    logout();
 
-    // Show thank you message
-    showToastNotification('Thank you! Visit again soon 👋', 'success');
+    // Navigate to landing page IMMEDIATELY
+    navigate('/');
 
-    // Wait a moment for user to see the message
-    setTimeout(() => {
-      // Clear auth state using AuthContext
-      logout();
-      // Redirect to login page
-      navigate('/login');
-    }, 1000);
+    // Make logout API call in background (fire-and-forget)
+    api.post('/api/auth/logout').catch(() => {
+      // Silently ignore errors
+    });
   };
 
   const handleTransactionAction = async (txId: string, action: string) => {
@@ -1404,16 +1434,44 @@ const StatCard: React.FC<{
   icon: React.ReactNode;
   color: string;
 }> = ({ label, value, icon, color }) => {
-  const colors: Record<string, string> = {
-    blue: 'border-blue-500/30 hover:shadow-blue-500/5',
-    yellow: 'border-yellow-500/30 hover:shadow-yellow-500/5',
-    red: 'border-red-500/30 hover:shadow-red-500/5',
-    purple: 'border-purple-500/30 hover:shadow-purple-500/5',
-    orange: 'border-orange-500/30 hover:shadow-orange-500/5',
-    green: 'border-green-500/30 hover:shadow-green-500/5',
+
+  const styles: Record<string, { border: string; bg: string; iconBg: string }> = {
+    blue: {
+      border: 'hover:border-blue-500/30 hover:shadow-blue-500/5',
+      bg: 'hover:shadow-lg',
+      iconBg: 'bg-blue-500/10 group-hover:bg-blue-500/20'
+    },
+    yellow: {
+      border: 'hover:border-yellow-500/30 hover:shadow-yellow-500/5',
+      bg: 'hover:shadow-lg',
+      iconBg: 'bg-yellow-500/10 group-hover:bg-yellow-500/20'
+    },
+    red: {
+      border: 'hover:border-red-500/30 hover:shadow-red-500/5',
+      bg: 'hover:shadow-lg',
+      iconBg: 'bg-red-500/10 group-hover:bg-red-500/20'
+    },
+    purple: {
+      border: 'hover:border-purple-500/30 hover:shadow-purple-500/5',
+      bg: 'hover:shadow-lg',
+      iconBg: 'bg-purple-500/10 group-hover:bg-purple-500/20'
+    },
+    orange: {
+      border: 'hover:border-orange-500/30 hover:shadow-orange-500/5',
+      bg: 'hover:shadow-lg',
+      iconBg: 'bg-orange-500/10 group-hover:bg-orange-500/20'
+    },
+    green: {
+      border: 'hover:border-green-500/30 hover:shadow-green-500/5',
+      bg: 'hover:shadow-lg',
+      iconBg: 'bg-green-500/10 group-hover:bg-green-500/20'
+    },
   };
+
+  const currentStyle = styles[color] || styles.blue;
+
   return (
-    <div className={`bg-[#111] border border-white/5 rounded-2xl p-6 hover:${colors[color]} transition-all hover:shadow-lg group`}>
+    <div className={`bg-[#111] border border-white/5 rounded-2xl p-6 transition-all group ${currentStyle.border} ${currentStyle.bg}`}>
       <div className="flex justify-between items-start">
         <div>
           <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">{label}</p>
@@ -1421,7 +1479,7 @@ const StatCard: React.FC<{
             {value}
           </h3>
         </div>
-        <div className={`p-2 bg-${color}-500/10 rounded-lg group-hover:bg-${color}-500/20 transition-colors`}>
+        <div className={`p-2 rounded-lg transition-colors ${currentStyle.iconBg}`}>
           {icon}
         </div>
       </div>
