@@ -125,17 +125,29 @@ const Auth: React.FC = () => {
           }
         );
 
+        // DEBUGGING: Log the full response
+        console.log('=== LOGIN RESPONSE DEBUG ===');
+        console.log('Full response:', response);
+        console.log('verification_required:', response.verification_required);
+        console.log('message:', response.message);
+        console.log('Has verification_required?', !!response.verification_required);
+        console.log('Type of verification_required:', typeof response.verification_required);
+
         // Check if verification is required (202 status)
         if (response.verification_required) {
+          console.log('✅ Verification IS required:', response.verification_required);
           setVerificationRequired(response.verification_required);
           setOtpTimer(300); // 5 minutes
 
           if (response.verification_required === 'totp') {
+            console.log('Setting success message for TOTP');
             setSuccess('Enter your 6-digit authenticator code');
           } else if (response.verification_required === 'email_otp') {
+            console.log('Setting success message for Email OTP');
             setSuccess('OTP sent to your email. Check your inbox.');
           }
         } else {
+          console.log('⚠️ No verification required - direct login');
           // Direct login without 2FA
           console.log('Login response:', response);
           console.log('Token:', response.access_token || response.token);
