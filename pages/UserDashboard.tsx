@@ -160,12 +160,34 @@ export const UserDashboard: React.FC = () => {
   // ==================== FETCH FUNCTIONS ====================
 
   useEffect(() => {
-    fetchUserProfile();
-    fetchNotifications();
-    fetchAlerts();
-    fetchCards();
-    fetchDashboardSummary();
-    startSessionTimer();
+    let isMounted = true; // FIXED: Cleanup flag to prevent state updates after unmount
+
+    const loadInitialData = async () => {
+      if (!isMounted) return;
+      try {
+        await fetchUserProfile();
+        if (!isMounted) return;
+        await fetchNotifications();
+        if (!isMounted) return;
+        await fetchAlerts();
+        if (!isMounted) return;
+        await fetchCards();
+        if (!isMounted) return;
+        await fetchDashboardSummary();
+        if (!isMounted) return;
+        startSessionTimer();
+      } catch (error) {
+        // Ignore errors if component unmounted
+        if (!isMounted) return;
+        console.error('Failed to load initial data:', error);
+      }
+    };
+
+    loadInitialData();
+
+    return () => {
+      isMounted = false; // Cleanup: prevent any pending state updates
+    };
   }, []);
 
   // Pagination Effects
@@ -382,16 +404,24 @@ export const UserDashboard: React.FC = () => {
   // ==================== HANDLER FUNCTIONS ====================
 
   const handleLogout = async () => {
-    try {
-      await api.post('/api/auth/logout');
-    } catch (error) {
-      console.error('Logout failed');
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('loginTime');
-      navigate('/login');
+    // FIXED: Clear token IMMEDIATELY to stop any ongoing authenticated requests
+    const token = localStorage.getItem('token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('loginTime');
+
+    // Try to call logout API (best effort - user is logging out anyway)
+    if (token) {
+      try {
+        await api.post('/api/auth/logout');
+      } catch (error) {
+        // Ignore errors - token already cleared
+        console.log('Logout API call failed (expected if navigating away)')
+      }
     }
+
+    // Navigate immediately
+    navigate('/login');
   };
 
   const processPayment = async (payload: any) => {

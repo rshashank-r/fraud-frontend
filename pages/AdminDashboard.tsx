@@ -219,11 +219,11 @@ export const AdminDashboard: React.FC = () => {
     fetchOverviewData();
 
     const interval = setInterval(() => {
-      // Poll based on active tab
+      // Poll based on active tab - OPTIMIZED: Reduced from 10s to 30s
       if (activeTab === 'overview') fetchOverviewData();
       if (activeTab === 'transactions') fetchTransactions();
       if (activeTab === 'users') fetchUsers();
-    }, 10000);
+    }, 30000); // Changed from 10000 to 30000 (30 seconds)
 
     return () => clearInterval(interval);
   }, [activeTab, fetchOverviewData, fetchTransactions, fetchUsers]);
@@ -241,14 +241,26 @@ export const AdminDashboard: React.FC = () => {
     if (activeTab === 'alerts-logs') fetchAlertsAndLogs();
   }, [activeTab, alertsPage, suspiciousPage, ticketsPage]);
 
-  // Fetch on Tab Change or Search/Page change (debounced effect could be added for search)
+  // OPTIMIZED: Debounced search - Wait 500ms after user stops typing before fetching
   useEffect(() => {
-    if (activeTab === 'transactions') fetchTransactions();
-  }, [txPage, txSearch, activeTab, fetchTransactions]);
+    if (activeTab !== 'transactions') return;
+
+    const debounceTimer = setTimeout(() => {
+      fetchTransactions();
+    }, 500); // Debounce delay
+
+    return () => clearTimeout(debounceTimer);
+  }, [txPage, txSearch, activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'users') fetchUsers();
-  }, [userPage, userSearch, activeTab, fetchUsers]);
+    if (activeTab !== 'users') return;
+
+    const debounceTimer = setTimeout(() => {
+      fetchUsers();
+    }, 500); // Debounce delay
+
+    return () => clearTimeout(debounceTimer);
+  }, [userPage, userSearch, activeTab]);
 
 
   // --- 4. ACTION HANDLERS ---
