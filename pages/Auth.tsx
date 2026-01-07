@@ -59,7 +59,7 @@ const Auth: React.FC = () => {
   };
 
   // 2FA/OTP States
-  const [verificationRequired, setVerificationRequired] = useState<'totp' | 'email_otp' | null>(null);
+  const [verificationRequired, setVerificationRequired] = useState<'totp' | 'email_otp' | 'otp_device' | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [otpTimer, setOtpTimer] = useState(0);
 
@@ -142,8 +142,10 @@ const Auth: React.FC = () => {
           if (response.verification_required === 'totp') {
             console.log('Setting success message for TOTP');
             setSuccess('Enter your 6-digit authenticator code');
-          } else if (response.verification_required === 'email_otp') {
-            console.log('Setting success message for Email OTP');
+          } else if (response.verification_required === 'email_otp' || response.verification_required === 'otp_device') {
+            console.log('Setting success message for Email OTP (type:', response.verification_required, ')');
+            // Both email_otp and otp_device use email OTP verification
+            // otp_device is for high-risk logins, same verification process
             setSuccess('OTP sent to your email. Check your inbox.');
           }
         } else {
@@ -268,8 +270,9 @@ const Auth: React.FC = () => {
       if (verificationRequired === 'totp') {
         // ✅ TOTP Verification (Google Authenticator)
         response = await authAPI.verify2FA(email, verificationCode);
-      } else if (verificationRequired === 'email_otp') {
-        // ✅ Email OTP Verification
+      } else if (verificationRequired === 'email_otp' || verificationRequired === 'otp_device') {
+        // ✅ Email OTP Verification (both email_otp and otp_device use same endpoint)
+        console.log('Verifying email OTP, type:', verificationRequired);
         response = await authAPI.verifyEmailOTP(email, verificationCode);
       }
 
@@ -382,7 +385,9 @@ const Auth: React.FC = () => {
             <p className="text-gray-400">
               {verificationRequired === 'totp'
                 ? 'Enter your authenticator code'
-                : 'Enter the OTP sent to your email'}
+                : verificationRequired === 'otp_device'
+                  ? 'High-risk login detected. Enter the OTP sent to your email'
+                  : 'Enter the OTP sent to your email'}
             </p>
           </div>
 
@@ -433,7 +438,7 @@ const Auth: React.FC = () => {
                 </div>
 
                 {/* Timer */}
-                {verificationRequired === 'email_otp' && otpTimer > 0 && (
+                {(verificationRequired === 'email_otp' || verificationRequired === 'otp_device') && otpTimer > 0 && (
                   <p className="mt-2 text-xs text-gray-400 text-center">
                     OTP expires in {Math.floor(otpTimer / 60)}:{(otpTimer % 60).toString().padStart(2, '0')}
                   </p>
@@ -457,7 +462,7 @@ const Auth: React.FC = () => {
               </Button>
 
               {/* Resend OTP (Email Only) */}
-              {verificationRequired === 'email_otp' && (
+              {(verificationRequired === 'email_otp' || verificationRequired === 'otp_device') && (
                 <button
                   type="button"
                   onClick={handleResendOTP}
