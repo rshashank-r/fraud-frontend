@@ -71,7 +71,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    // FIXED: Don't intercept errors from auth routes (login, OTP verification, etc.)
+    const isAuthRoute = error.config?.url?.includes('/api/auth/');
+
+    // Only redirect on 401/403 for NON-auth routes
+    if (!isAuthRoute && (error.response?.status === 401 || error.response?.status === 403)) {
       const currentPath = window.location.hash || window.location.pathname;
       if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
         setAuthToken(null);
@@ -84,6 +88,8 @@ api.interceptors.response.use(
         return new Promise(() => { });
       }
     }
+
+    // For auth routes OR if we're already on login page, let the error pass through
     return Promise.reject(error);
   }
 );
