@@ -216,16 +216,33 @@ export const AdminDashboard: React.FC = () => {
 
   // Initial Load & Polling
   useEffect(() => {
-    fetchOverviewData();
+    let isMounted = true; // FIXED: Cleanup flag to prevent state updates after unmount
+
+    const loadInitialData = async () => {
+      if (!isMounted) return;
+      try {
+        await fetchOverviewData();
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Failed to load initial data:', error);
+      }
+    };
+
+    loadInitialData();
 
     const interval = setInterval(() => {
+      // Only poll if component is still mounted
+      if (!isMounted) return;
       // Poll based on active tab - OPTIMIZED: Reduced from 10s to 30s
       if (activeTab === 'overview') fetchOverviewData();
       if (activeTab === 'transactions') fetchTransactions();
       if (activeTab === 'users') fetchUsers();
     }, 30000); // Changed from 10000 to 30000 (30 seconds)
 
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false; // Cleanup: prevent any pending state updates
+      clearInterval(interval);
+    };
   }, [activeTab, fetchOverviewData, fetchTransactions, fetchUsers]);
 
   // Load data when switching to analytics/intelligence/alerts tabs
