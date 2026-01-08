@@ -16,8 +16,9 @@ const PWAInstallPrompt: React.FC = () => {
             return;
         }
 
-        // Check if on mobile
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Check if on mobile (User Agent OR Screen Width for testing)
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            || window.innerWidth < 768;
 
         if (!isMobile) {
             // Not on mobile, don't show prompt

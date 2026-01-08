@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button, Input, Card } from '../components/ui';
 import { formatIndianCurrency } from '../src/utils/formatters';
@@ -23,6 +24,7 @@ interface UserProfile {
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   // Core States
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -492,13 +494,10 @@ export const UserDashboard: React.FC = () => {
     // Clear user state FIRST to prevent any new fetches
     setUser(null);
 
-    // Clear tokens IMMEDIATELY to stop any ongoing authenticated requests
-    const token = localStorage.getItem('token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('loginTime');
+    // Use AuthContext logout to sync state across app
+    logout();
 
-    // Navigate to landing page IMMEDIATELY - don't wait for API call
+    // Navigate to landing page IMMEDIATELY
     navigate('/');
 
     // Make logout API call in background (fire-and-forget)
