@@ -1547,7 +1547,7 @@ export const UserDashboard: React.FC = () => {
                                   <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
                                     <span className="flex items-center gap-1">
                                       <Clock className="w-3 h-3" />
-                                      {new Date(tx.date || tx.created_at).toLocaleString('en-IN', {
+                                      {new Date(tx.timestamp || tx.date || tx.created_at).toLocaleString('en-IN', {
                                         month: 'short',
                                         day: 'numeric',
                                         hour: '2-digit',
