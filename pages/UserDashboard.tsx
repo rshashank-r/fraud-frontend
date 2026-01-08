@@ -36,10 +36,63 @@ export const UserDashboard: React.FC = () => {
 
   // Session Management
   const [sessionExpiresIn, setSessionExpiresIn] = useState<number | null>(null);
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
+  const IDLE_TIMEOUT = 180 * 1000; // 3 minutes
+  const WARNING_TIMEOUT = 150 * 1000; // 2.5 minutes
+  const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Mobile Menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  // ... (keeping other states same) ...
+
+  // ==========================================
+  // IDLE TIMER & AUTO-LOGOUT
+  // ==========================================
+  const resetIdleTimer = () => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    setShowIdleWarning(false);
+
+    const newTimer = setTimeout(() => {
+      // Show Warning at 2.5 mins
+      setShowIdleWarning(true);
+
+      // Auto-Logout at 3 mins (nested timeout)
+      setTimeout(() => {
+        handleLogout();
+        // Force redirect if handleLogout doesn't cover it
+        window.location.href = '/login?reason=idle';
+      }, 30000);
+
+    }, WARNING_TIMEOUT);
+
+    idleTimerRef.current = newTimer;
+  };
+
+  useEffect(() => {
+    // Events to track activity
+    const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+
+    // Initial start
+    resetIdleTimer();
+
+    const handleActivity = () => {
+      // Only reset if warning is NOT shown (to prevent infinite resets if user is away)
+      if (!showIdleWarning) {
+        resetIdleTimer();
+      }
+    };
+
+    // Add listeners
+    events.forEach(event => window.addEventListener(event, handleActivity));
+
+    // Cleanup
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+    };
+  }, [showIdleWarning]);
 
   // Payment Modal States
   const [showPayModal, setShowPayModal] = useState(false);
@@ -175,8 +228,9 @@ export const UserDashboard: React.FC = () => {
       console.log('✅ Token found, loading initial data...');
 
       try {
-        await fetchUserProfile();
-        if (!isMounted) return;
+        const profileSuccess = await fetchUserProfile();
+        if (!profileSuccess || !isMounted) return; // Stop if profile load failed (e.g. 401)
+
         await fetchNotifications();
         if (!isMounted) return;
         await fetchAlerts();
@@ -185,7 +239,7 @@ export const UserDashboard: React.FC = () => {
         if (!isMounted) return;
         await fetchDashboardSummary();
         if (!isMounted) return;
-        startSessionTimer();
+        resetIdleTimer();
       } catch (error) {
         // Ignore errors if component unmounted
         if (!isMounted) return;
@@ -267,36 +321,27 @@ export const UserDashboard: React.FC = () => {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  const startSessionTimer = () => {
-    const interval = setInterval(() => {
-      const loginTime = localStorage.getItem('loginTime');
-      if (loginTime) {
-        const elapsed = Date.now() - parseInt(loginTime);
-        const remaining = Math.floor((30 * 60 * 1000 - elapsed) / 60000);
-        if (remaining <= 0) {
-          handleLogout();
-        } else {
-          setSessionExpiresIn(remaining);
-        }
-      }
-    }, 60000);
-    return () => clearInterval(interval);
-  };
 
-  const fetchUserProfile = async () => {
+
+
+
+  const fetchUserProfile = async (): Promise<boolean> => {
     const token = localStorage.getItem('token');
     if (!token) {
       console.log('No token, skipping user profile fetch');
-      return;
+      return false;
     }
     try {
       const res = await api.get('/api/auth/me');
       setUser(res.data);
+      return true;
     } catch (error: any) {
       console.error('Failed to fetch user profile', error);
       if (error.response?.status === 401) {
-        navigate('/login');
+        handleLogout();
+        return false;
       }
+      return false;
     }
   };
 
@@ -343,7 +388,7 @@ export const UserDashboard: React.FC = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await api.get('/api/alerts');
+      const res = await api.get('/api/alerts/');
       setAlerts(res.data || []);
     } catch (error) {
       console.error('Failed to fetch alerts');
@@ -363,7 +408,7 @@ export const UserDashboard: React.FC = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await api.get('/api/cards');
+      const res = await api.get('/api/cards/');
       setCards(res.data || []);
     } catch (error) {
       console.error('Failed to fetch cards');
@@ -880,11 +925,14 @@ export const UserDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '700ms' }}></div>
+    <div className="min-h-screen bg-[#030303]">
+      {/* AURORA BACKGROUND (Global Theme) */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
+        <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-cyan-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] left-[30%] w-[700px] h-[700px] bg-blue-900/10 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-4000" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.2]"></div>
       </div>
 
       {/* TOAST NOTIFICATION */}
@@ -917,150 +965,235 @@ export const UserDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="relative flex h-screen">
-        {/* MOBILE HEADER */}
-        {isMobile && (
-          <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <Shield className="w-8 h-8 text-cyan-400" />
-                <span className="text-xl font-bold text-white">SecureBank</span>
+
+
+      {/* IDLE WARNING MODAL */}
+      {
+        showIdleWarning && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-[#111] border border-red-500/50 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none"></div>
+
+              <div className="flex flex-col items-center text-center relative z-10">
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                  <Clock className="w-6 h-6 text-red-400" />
+                </div>
+
+                <h3 className="text-xl font-bold text-white mb-2">Session Expiring</h3>
+                <p className="text-gray-400 mb-6">
+                  You have been inactive for a while. For your security, you will be logged out in <span className="text-red-400 font-bold">30 seconds</span>.
+                </p>
+
+                <div className="flex gap-3 w-full">
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                  >
+                    Logout Now
+                  </Button>
+                  <Button
+                    onClick={() => { setShowIdleWarning(false); resetIdleTimer(); }}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20"
+                  >
+                    I'm Here
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setAlertsTab('notifications')}
-                  className="p-2 text-gray-400 hover:text-white relative"
-                >
-                  <Bell className="w-6 h-6" />
-                  {notifications.filter(n => !n.is_read).length > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-cyan-500 rounded-full border-2 border-slate-900"></span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              {/* Progress Bar Animation */}
+              <div className="absolute bottom-0 left-0 h-1 bg-red-600 animate-shrink w-full" style={{ animationDuration: '30s' }}></div>
+            </div>
+          </div>
+        )
+      }
 
-                  className="p-2 text-white hover:bg-slate-800 rounded-lg transition-colors"
-                >
-                  {isMobileMenuOpen ? (
-                    <X className="w-6 h-6" />
-                  ) : (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  )}
-                </button>
+      <div className="relative flex h-screen">
+        {/* ==================== LAYOUT ==================== */}
+
+        {/* MOBILE HEADER - Clean & Minimal */}
+        {isMobile && (
+          <div className="fixed top-0 left-0 right-0 z-40 bg-black/40 backdrop-blur-xl border-b border-white/5 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="p-2 -ml-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-lg text-white tracking-tight">SecureBank</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setAlertsTab('notifications')}
+                className="relative p-2 rounded-full hover:bg-white/5 transition-colors"
+              >
+                <Bell className="w-5 h-5 text-gray-400" />
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-slate-900"></span>
+                )}
+              </button>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 p-[1px]">
+                <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* SIDEBAR - Desktop & Mobile Menu */}
-        <div className={`
-          ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300' : 'w-64 flex-shrink-0'}
-          ${isMobile && !isMobileMenuOpen ? '-translate-x-full' : 'translate-x-0'}
-          ${isMobile ? 'mt-16' : ''}
-          bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 flex flex-col
-        `}>
-          {/* Logo - Desktop Only */}
-          {!isMobile && (
-            <div className="p-6 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <Shield className="w-8 h-8 text-cyan-400" />
-                <span className="text-xl font-bold text-white">SecureBank</span>
+        {/* DESKTOP SIDEBAR - Glassmorphism */}
+        {!isMobile && (
+          <div className="w-72 bg-black/20 backdrop-blur-xl border-r border-white/5 flex flex-col z-50">
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white tracking-tight">SecureBank</h1>
+                  <p className="text-xs text-gray-500 font-medium tracking-wider">PREMIUM</p>
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <NavItem
-              icon={Home}
-              label="Dashboard"
-              active={activeTab === 'overview'}
-              onClick={() => {
-                setActiveTab('overview');
-                if (isMobile) setIsMobileMenuOpen(false);
-              }}
-            />
-            <NavItem
-              icon={CreditCard}
-              label="Cards"
-              active={activeTab === 'cards'}
-              onClick={() => {
-                setActiveTab('cards');
-                fetchCards();
-                if (isMobile) setIsMobileMenuOpen(false);
-              }}
-            />
-            <NavItem
-              icon={FileText}
-              label="Transactions"
-              active={activeTab === 'transactions'}
-              onClick={() => {
-                setActiveTab('transactions');
-                fetchTransactions();
-                if (isMobile) setIsMobileMenuOpen(false);
-              }}
-            />
-            <NavItem
-              icon={BarChart3}
-              label="Analytics"
-              active={activeTab === 'analytics'}
-              onClick={() => {
-                setActiveTab('analytics');
-                fetchMonthlyExpenses();
-                if (isMobile) setIsMobileMenuOpen(false);
-              }}
-            />
-            <NavItem
-              icon={Shield}
-              label="Security"
-              active={activeTab === 'security'}
-              onClick={() => {
-                setActiveTab('security');
-                fetchDevices();
-                fetchLoginHistory();
-                if (isMobile) setIsMobileMenuOpen(false);
-              }}
-            />
-            <NavItem
-              icon={Bell}
-              label="Support"
-              active={activeTab === 'support'}
-              badge={notifications.filter(n => !n.is_read).length}
-              onClick={() => {
-                setActiveTab('support');
-                fetchTickets();
-                fetchDisputes();
-                if (isMobile) setIsMobileMenuOpen(false);
-              }}
-            />
-          </nav>
-
-          {/* User Profile Section */}
-          <div className="p-4 border-t border-slate-800">
-            <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl mb-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">
-                  {user?.email?.split('@')[0] || 'User'}
-                </p>
-                <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+              <div className="space-y-2">
+                <NavItem icon={Home} label="Dashboard" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
+                <NavItem icon={CreditCard} label="Cards" active={activeTab === 'cards'} onClick={() => { setActiveTab('cards'); fetchCards(); }} />
+                <NavItem icon={FileText} label="Transactions" active={activeTab === 'transactions'} onClick={() => { setActiveTab('transactions'); fetchTransactions(); }} />
+                <NavItem icon={BarChart3} label="Analytics" active={activeTab === 'analytics'} onClick={() => { setActiveTab('analytics'); fetchMonthlyExpenses(); }} />
+                <NavItem icon={Shield} label="Security" active={activeTab === 'security'} onClick={() => { setActiveTab('security'); fetchDevices(); }} />
+                <NavItem icon={Bell} label="Support" active={activeTab === 'support'} badge={notifications.filter(n => !n.is_read).length} onClick={() => { setActiveTab('support'); fetchTickets(); }} />
               </div>
             </div>
 
-            <Button
-              onClick={handleLogout}
-              className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="mt-auto p-6 border-t border-white/5 bg-black/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 p-[2px]">
+                  <img
+                    src={`https://ui-avatars.com/api/?name=${user?.email}&background=random`}
+                    alt="Profile"
+                    className="w-full h-full rounded-full"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{user?.email?.split('@')[0]}</p>
+                  <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                </div>
+              </div>
+              <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* MOBILE SIDEBAR DRAWER */}
+        {isMobile && (
+          <>
+            {/* Overlay */}
+            {isMobileMenuOpen && (
+              <div
+                className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
+            )}
+
+            {/* Drawer */}
+            <div className={`fixed inset-y-0 left-0 z-[70] w-72 bg-[#0a0a0a] border-r border-white/10 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+              <div className="p-6 h-full flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                      <Shield className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="text-xl font-bold text-white tracking-tight">SecureBank</span>
+                  </div>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-400 hover:text-white">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <NavItem icon={Home} label="Dashboard" active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }} />
+                  <NavItem icon={CreditCard} label="Cards" active={activeTab === 'cards'} onClick={() => { setActiveTab('cards'); fetchCards(); setIsMobileMenuOpen(false); }} />
+                  <NavItem icon={FileText} label="Transactions" active={activeTab === 'transactions'} onClick={() => { setActiveTab('transactions'); fetchTransactions(); setIsMobileMenuOpen(false); }} />
+                  <NavItem icon={BarChart3} label="Analytics" active={activeTab === 'analytics'} onClick={() => { setActiveTab('analytics'); fetchMonthlyExpenses(); setIsMobileMenuOpen(false); }} />
+                  <NavItem icon={Shield} label="Security" active={activeTab === 'security'} onClick={() => { setActiveTab('security'); fetchDevices(); setIsMobileMenuOpen(false); }} />
+                  <NavItem icon={Bell} label="Support" active={activeTab === 'support'} badge={notifications.filter(n => !n.is_read).length} onClick={() => { setActiveTab('support'); fetchTickets(); setIsMobileMenuOpen(false); }} />
+                </div>
+
+                <div className="mt-auto pt-6 border-t border-white/5">
+                  <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-white/5">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 p-[2px]">
+                      <img
+                        src={`https://ui-avatars.com/api/?name=${user?.email}&background=random`}
+                        alt="Profile"
+                        className="w-full h-full rounded-full"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{user?.email?.split('@')[0]}</p>
+                      <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                    </div>
+                  </div>
+                  <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* MOBILE BOTTOM NAV - Floating & Glass */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 pb-safe">
+            <div className="flex items-center justify-around p-2">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'overview' ? 'text-cyan-400' : 'text-gray-500'}`}
+              >
+                <Home className={`w-6 h-6 ${activeTab === 'overview' && 'fill-cyan-400/20'}`} />
+                <span className="text-[10px] font-medium">Home</span>
+              </button>
+              <button
+                onClick={() => { setActiveTab('transactions'); fetchTransactions(); }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'transactions' ? 'text-purple-400' : 'text-gray-500'}`}
+              >
+                <FileText className={`w-6 h-6 ${activeTab === 'transactions' && 'fill-purple-400/20'}`} />
+                <span className="text-[10px] font-medium">History</span>
+              </button>
+
+              {/* Floating Action Button (FAB) in Center */}
+              <button
+                onClick={() => setShowPayModal(true)}
+                className="relative -top-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full shadow-lg shadow-cyan-500/40 text-white hover:scale-105 transition-transform"
+              >
+                <Send className="w-6 h-6 ml-0.5" />
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('cards'); fetchCards(); }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'cards' ? 'text-pink-400' : 'text-gray-500'}`}
+              >
+                <CreditCard className={`w-6 h-6 ${activeTab === 'cards' && 'fill-pink-400/20'}`} />
+                <span className="text-[10px] font-medium">Cards</span>
+              </button>
+              <button
+                onClick={() => { setActiveTab('analytics'); fetchMonthlyExpenses(); }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'analytics' ? 'text-orange-400' : 'text-gray-500'}`}
+              >
+                <BarChart3 className={`w-6 h-6 ${activeTab === 'analytics' && 'fill-orange-400/20'}`} />
+                <span className="text-[10px] font-medium">Stats</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Overlay */}
         {isMobile && isMobileMenuOpen && (
@@ -1071,7 +1204,7 @@ export const UserDashboard: React.FC = () => {
         )}
 
         {/* MAIN CONTENT */}
-        <div className={`flex-1 overflow-y-auto ${isMobile ? 'mt-16' : ''}`}>
+        <div className={`flex-1 overflow-y-auto ${isMobile ? 'mt-16 pb-32' : ''}`}>
           {/* Header */}
           <div className="bg-slate-900/30 backdrop-blur-xl border-b border-slate-800 p-4 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -1090,7 +1223,7 @@ export const UserDashboard: React.FC = () => {
               </div>
 
               {/* Right Side - Notifications Toggle */}
-              <div className="flex items-center gap-3 md:gap-4">
+              <div className="hidden md:flex items-center gap-3 md:gap-4">
                 {/* Notifications/Alerts Toggle */}
                 <div className="flex bg-slate-900/50 rounded-xl p-1 border border-slate-800">
                   <button
@@ -1130,154 +1263,102 @@ export const UserDashboard: React.FC = () => {
           {/* Content Area with Responsive Padding */}
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-            {/* UNIFIED ACCOUNT SUMMARY - MERGED CARD */}
+            {/* NEW BALANCE CARD - HOLOGRAPHIC DESIGN */}
             {activeTab === 'overview' && (
-              <div className="relative overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl mb-8 shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-800/50">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 shadow-2xl group">
+                {/* Animated Background Mesh */}
+                <div className="absolute inset-0 opacity-30">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)] animate-pulse"></div>
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl mix-blend-screen animate-blob"></div>
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl mix-blend-screen animate-blob animation-delay-2000"></div>
+                </div>
 
-                  {/* Balance Section */}
-                  <div className="p-6 relative group hover:bg-slate-800/30 transition-colors">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
-                        <DollarSign className="w-5 h-5" />
-                      </div>
-                      <span className="text-xs font-mono text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-500/20">
-                        Active
+                <div className="relative p-6 sm:p-8">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                    <div>
+                      <p className="text-gray-400 font-medium tracking-widest text-xs uppercase mb-1">Total Balance</p>
+                      <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-gray-400 tracking-tight">
+                        {formatIndianCurrency(user?.balance || 0)}
+                      </h1>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                      <div className={`w-2 h-2 rounded-full ${user?.is_locked ? 'bg-red-500' : 'bg-emerald-500'} animate-pulse`}></div>
+                      <span className="text-xs font-bold tracking-wide text-white">
+                        {user?.is_locked ? 'FROZEN' : 'ACTIVE'}
                       </span>
                     </div>
-                    <div>
-                      <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Total Balance</p>
-                      <h2 className="text-3xl font-bold text-white tracking-tight">
-                        {formatIndianCurrency(user?.balance || 0)}
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-2 font-mono">
-                        Acc: •••• {user?.account_number?.slice(-4)}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className={`w-4 h-4 ${(user?.trust_score || 0) > 80 ? 'text-emerald-400' : 'text-yellow-400'}`} />
+                        <span className="text-xs font-semibold text-gray-400 uppercase">Trust Score</span>
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <span className="text-2xl font-bold text-white">{user?.trust_score || 0}</span>
+                        <span className="text-xs text-gray-500 mb-1">/100</span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CreditCard className="w-4 h-4 text-purple-400" />
+                        <span className="text-xs font-semibold text-gray-400 uppercase">Account</span>
+                      </div>
+                      <p className="text-lg font-mono text-white tracking-wider">
+                        •••• {user?.account_number?.slice(-4)}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Trust Score Section */}
-                  <div className="p-6 relative group hover:bg-slate-800/30 transition-colors">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`p-2 rounded-lg ${(user?.trust_score || 0) > 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                        <Shield className="w-5 h-5" />
-                      </div>
-                      <span className={`text-xs font-bold px-2 py-1 rounded border ${(user?.trust_score || 0) > 80 ? 'text-emerald-400 bg-emerald-950/30 border-emerald-500/20' : 'text-yellow-400 bg-yellow-950/30 border-yellow-500/20'}`}>
-                        {(user?.trust_score || 0) > 80 ? 'EXCELLENT' : 'GOOD'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Trust Score</p>
-                      <div className="flex items-baseline gap-1">
-                        <h2 className="text-3xl font-bold text-white">
-                          {user?.trust_score || 0}
-                        </h2>
-                        <span className="text-sm text-gray-500">/100</span>
-                      </div>
-                      {user?.is_locked ? <Lock className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-                    </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded border animate-pulse ${user?.is_locked ? 'text-red-400 bg-red-950/30 border-red-500/20' : 'text-violet-400 bg-violet-950/30 border-violet-500/20'}`}>
-                      {user?.is_locked ? 'ACTION REQUIRED' : 'SECURE'}
-                    </span>
-                  </div>
-                  <div className="p-6 relative group hover:bg-slate-800/30 transition-colors">
-                    <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Account Status</p>
-                    <h2 className="text-2xl font-bold text-white tracking-tight">
-                      {user?.is_locked ? 'FROZEN' : 'ACTIVE'}
-                    </h2>
-                    {user?.is_locked ? (
-                      <Button
-                        onClick={() => setShowUnfreezeModal(true)}
-                        size="sm"
-                        className="mt-3 w-full bg-red-600 hover:bg-red-500 text-white border-0 h-8 text-xs"
-                      >
-                        <Unlock className="w-3 h-3 mr-2" />
-                        Unfreeze
-                      </Button>
-                    ) : (
-                      <button
-                        onClick={handleFreezeAccount}
-                        className="text-xs text-orange-400 hover:text-orange-300 mt-2 flex items-center gap-1 hover:underline decoration-orange-400/50"
-                      >
-                        Freeze Account
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* RESPONSIVE QUICK ACTIONS */}
-            {
-              activeTab === 'overview' && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 mb-6 sm:mb-8">
-                  <Button
+            {/* NEW QUICK ACTIONS - NEON GRID */}
+            {activeTab === 'overview' && (
+              <>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="w-1 h-6 bg-cyan-500 rounded-full"></span>
+                  Quick Actions
+                </h3>
+                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
+                  {/* Transfer - Primary Action */}
+                  <button
                     onClick={() => setShowPayModal(true)}
-                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white h-16 sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
+                    className="group relative p-4 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 transition-all shadow-lg hover:shadow-cyan-500/25 flex flex-col items-center justify-center gap-2 h-32 overflow-hidden"
                   >
-                    <Send className="w-4 h-4 sm:w-6 sm:h-6" />
-                    <span>Send Money</span>
-                  </Button>
+                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity transform group-hover:scale-110">
+                      <Send className="w-16 h-16" />
+                    </div>
+                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm z-10">
+                      <Send className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="font-bold text-white z-10 text-sm">Send Money</span>
+                  </button>
 
-                  <Button
-                    onClick={() => {
-                      setActiveTab('transactions');
-                      fetchTransactions();
-                    }}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-16 sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
-                  >
-                    <FileText className="w-4 h-4 sm:w-6 sm:h-6" />
-                    <span>Transactions</span>
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setActiveTab('security');
-                      fetchDevices();
-                      fetchLoginHistory();
-                    }}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white h-16 sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
-                  >
-                    <Shield className="w-4 h-4 sm:w-6 sm:h-6" />
-                    <span>Security</span>
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setActiveTab('cards');
-                      fetchCards();
-                    }}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white h-16 sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
-                  >
-                    <CreditCard className="w-4 h-4 sm:w-6 sm:h-6" />
-                    <span>Cards</span>
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setActiveTab('analytics');
-                      fetchMonthlyExpenses();
-                    }}
-                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white h-16 sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
-                  >
-                    <DollarSign className="w-4 h-4 sm:w-6 sm:h-6" />
-                    <span>Analytics</span>
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setActiveTab('support');
-                      fetchTickets();
-                      fetchDisputes();
-                    }}
-                    className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white h-16 sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
-                  >
-                    <Bell className="w-4 h-4 sm:w-6 sm:h-6" />
-                    <span>Support</span>
-                  </Button>
+                  {/* Other Actions */}
+                  {[
+                    { label: 'History', icon: FileText, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', action: () => { setActiveTab('transactions'); fetchTransactions(); } },
+                    { label: 'Cards', icon: CreditCard, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20', action: () => { setActiveTab('cards'); fetchCards(); } },
+                    { label: 'Stats', icon: BarChart3, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', action: () => { setActiveTab('analytics'); fetchMonthlyExpenses(); } },
+                    { label: 'Security', icon: Shield, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', action: () => { setActiveTab('security'); fetchDevices(); } },
+                    { label: 'Support', icon: Bell, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', action: () => { setActiveTab('support'); fetchTickets(); } },
+                  ].map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={item.action}
+                      className={`group p-4 rounded-2xl border ${item.border} ${item.bg} hover:bg-white/5 transition-all flex flex-col items-center justify-center gap-2 h-32`}
+                    >
+                      <div className={`p-3 rounded-xl bg-slate-900/50 group-hover:scale-110 transition-transform ${item.color}`}>
+                        <item.icon className="w-6 h-6" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-300 group-hover:text-white">{item.label}</span>
+                    </button>
+                  ))}
                 </div>
-              )
-            }
+              </>
+            )}
             {/* NOTIFICATIONS & ALERTS CONTENT - Only on Overview */}
             {
               activeTab === 'overview' && (notifications.length > 0 || alerts.length > 0) && (
@@ -2421,6 +2502,16 @@ export const UserDashboard: React.FC = () => {
                                 {formatIndianCurrency(paymentResult?.new_balance || user?.balance || 0)}
                               </p>
                             </div>
+                            {/* RISK SCORE DISPLAY */}
+                            <div className="flex justify-between items-center px-4 py-2 bg-slate-800/30 rounded-lg border border-white/5">
+                              <span className="text-gray-400 text-xs uppercase tracking-wider">Security Score</span>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${paymentResult?.risk_score > 0.6 ? 'bg-red-500' : paymentResult?.risk_score > 0.3 ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+                                <span className={`font-mono font-bold ${paymentResult?.risk_score > 0.6 ? 'text-red-400' : paymentResult?.risk_score > 0.3 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                  {paymentResult?.risk_score?.toFixed(2) || '0.00'}
+                                </span>
+                              </div>
+                            </div>
                           </>
                         ) : paymentResult?.status === 'BLOCKED' ? (
                           <>
@@ -3296,7 +3387,7 @@ export const UserDashboard: React.FC = () => {
           }
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 export default UserDashboard;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Shield, Loader2, CheckCircle } from 'lucide-react';
+import { RefreshCw, Shield, Loader2, CheckCircle, Eye } from 'lucide-react';
 import { authAPI } from '../services/api';
 
 interface CaptchaProps {
@@ -26,6 +26,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
     setShowHint(false); // Hide hint for new challenge
     try {
       const data = await authAPI.getCaptchaChallenge();
+      console.log('🐞 CAPTCHA DATA RECEIVED:', data); // DEBUG LOG
       setChallenge(data);
     } catch (error) {
       console.error('Failed to load CAPTCHA:', error);
@@ -125,20 +126,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
                 }`}
               title={showHint ? "Hide answer" : "Show answer hint"}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4" />
-                <circle cx="12" cy="8" r="0.5" fill="currentColor" />
-              </svg>
+              <Eye className="w-4 h-4" />
             </button>
 
             {/* Refresh Button */}
@@ -175,7 +163,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError }) => {
             placeholder="Your answer"
             className={`w-full px-4 py-3 rounded-lg text-center text-lg font-semibold transition-all ${isVerified
               ? 'bg-green-500/10 border-2 border-green-500/50 text-green-400'
-              : 'bg-slate-900 border-2 border-slate-700 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20'
+              : 'bg-white/5 backdrop-blur-md border border-white/10 text-white focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:bg-black/40 shadow-inner'
               } outline-none`}
             maxLength={4}
           />

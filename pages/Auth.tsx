@@ -367,17 +367,20 @@ const Auth: React.FC = () => {
   // ==========================================
   if (verificationRequired) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#030303] flex items-center justify-center p-4">
         {/* Background Effects */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '700ms' }}></div>
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
+          <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-cyan-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob animation-delay-2000" />
+          <div className="absolute bottom-[-20%] left-[30%] w-[700px] h-[700px] bg-blue-900/10 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-4000" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-grid-pattern opacity-[0.2]"></div>
         </div>
 
         <div className="relative w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-900/80 border border-cyan-500/30 rounded-2xl mb-4">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl mb-4">
               <Shield className="w-8 h-8 text-cyan-400" />
               <span className="text-2xl font-bold text-white">SecureBank</span>
             </div>
@@ -392,7 +395,7 @@ const Auth: React.FC = () => {
           </div>
 
           {/* Verification Card */}
-          <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
             {/* Alert Messages */}
             {error && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 animate-shake">
@@ -427,7 +430,7 @@ const Auth: React.FC = () => {
                     pattern="[0-9]*"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="w-full pl-12 pr-4 py-5 bg-slate-800 border-2 border-slate-700 rounded-xl text-white text-center text-3xl tracking-widest font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/30 transition-all touch-manipulation"
+                    className="w-full pl-12 pr-4 py-5 bg-white/5 backdrop-blur-md border-2 border-white/10 rounded-xl text-white text-center text-3xl tracking-widest font-mono placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/30 transition-all touch-manipulation shadow-inner"
                     style={{ fontSize: '28px', letterSpacing: '0.5em' }}
                     placeholder="000000"
                     maxLength={6}
@@ -509,17 +512,20 @@ const Auth: React.FC = () => {
   // RENDER: LOGIN/REGISTER SCREEN
   // ==========================================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#030303] flex items-center justify-center p-4">
       {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '700ms' }}></div>
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
+        <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-cyan-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] left-[30%] w-[700px] h-[700px] bg-blue-900/10 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-4000" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.2]"></div>
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-900/80 border border-cyan-500/30 rounded-2xl mb-4">
+          <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl mb-4">
             <Shield className="w-8 h-8 text-cyan-400" />
             <span className="text-2xl font-bold text-white">SecureBank</span>
           </div>
@@ -532,9 +538,9 @@ const Auth: React.FC = () => {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
           {/* Tabs */}
-          <div className="flex gap-2 mb-8 p-1 bg-slate-800/50 rounded-xl">
+          <div className="flex gap-2 mb-8 p-1 bg-white/5 rounded-xl">
             <button
               onClick={() => {
                 setIsLogin(true);
@@ -593,7 +599,7 @@ const Auth: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full pl-12 pr-4 py-4 !bg-black/50 !backdrop-blur-md border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:!bg-black/70 transition-all shadow-inner"
                   placeholder="your.email@example.com"
                   required
                   autoComplete="username"
@@ -610,7 +616,7 @@ const Auth: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full pl-12 pr-12 py-4 !bg-black/50 !backdrop-blur-md border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:!bg-black/70 transition-all shadow-inner"
                   placeholder="••••••••"
                   required
                   minLength={8}
@@ -619,7 +625,7 @@ const Auth: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors z-10 p-1"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -658,7 +664,7 @@ const Auth: React.FC = () => {
                     type="tel"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-4 !bg-black/50 !backdrop-blur-md border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:!bg-black/70 transition-all shadow-inner"
                     placeholder="+1 (555) 123-4567"
                     autoComplete="tel"
                   />

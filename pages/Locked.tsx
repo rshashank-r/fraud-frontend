@@ -27,8 +27,16 @@ const Locked: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cyber-900 p-4">
-      <Card className="max-w-lg w-full border-cyber-danger shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+    <div className="min-h-screen flex items-center justify-center bg-[#030303] p-4">
+      {/* AURORA BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
+        <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-cyan-900/20 rounded-full blur-[120px] mix-blend-screen animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] left-[30%] w-[700px] h-[700px] bg-blue-900/10 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-4000" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.2]"></div>
+      </div>
+      <Card className="max-w-lg w-full border-cyber-danger shadow-[0_0_30px_rgba(239,68,68,0.2)] relative z-10">
         <div className="flex flex-col items-center text-center mb-6">
           <ShieldAlert className="w-16 h-16 text-cyber-danger mb-4" />
           <h1 className="text-3xl font-bold text-white">Account Locked</h1>
@@ -47,7 +55,7 @@ const Locked: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input 
+            <Input
               label="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -56,7 +64,7 @@ const Locked: React.FC = () => {
             />
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-400">Reason for Appeal</label>
-              <textarea 
+              <textarea
                 className="w-full bg-cyber-800 border border-cyber-700 text-white rounded-lg px-4 py-2 focus:border-cyber-cyan focus:outline-none min-h-[100px]"
                 placeholder="Explain why this lock is a mistake..."
                 value={reason}

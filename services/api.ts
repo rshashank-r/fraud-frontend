@@ -325,7 +325,7 @@ export const transactionAPI = {
 // ==========================================
 export const cardsAPI = {
   getCards: async () => {
-    const response = await api.get('/api/cards');
+    const response = await api.get('/api/cards/');
     return response.data;
   },
 
@@ -415,7 +415,7 @@ export const supportAPI = {
 // ==========================================
 export const alertsAPI = {
   getAlerts: async () => {
-    const response = await api.get('/api/alerts');
+    const response = await api.get('/api/alerts/');
     return response.data;
   },
 
